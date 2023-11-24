@@ -1,0 +1,32 @@
+Dans la première case mettre la structure contenant tous les champs, puis récupérer la taille de la structure et démarrer la première zone libre à une adresse multiple de 16 et supérieure à la taille de la structure.
+
+Pour éviter les problèmes d'alignement, il faut utiliser des structures.
+
+/!\ mem_init donne l'adresse initiale de la mémoire, mais du coup renvoie l'adresse où est stockée la structure initiale. 
+
+l'arithmétique sur les pointeurs (*void) est la même que pour les (*char) donc on peut autant utiliser l'un que l'autre, puisque la taille est de 1.
+
+On aligne tous les blocs de zones sur des adresses multiples de 8, donc il est possible qu'on soit obligé de rajouter jusuqu'à 7 octets à la fin de chaque zone pour que le tout soit aligné sur des adresses multiples de 8.
+
+Dans la structure au début de la mémoire on y met :
+  - taille initiale de la mémoire
+  - pointeur vers la première zone mémoire libre (correspondant à la tête de la liste chaînée des zones de mémoire libres)
+  - un pointeur vers la fonction permettant de savoir quelle stratégie on applique pour avoir une zone mémoire libre
+
+On peut y ajouter d'autres champs qui feront l'objet d'extensions
+ex : 
+  - taille de la plus petite zone mémoire (+ pointeur vers la case ?)
+  - taille de la grande petite zone mémoire (+ pointeur vers la case ?)
+     |	
+     ---> PROBLEME : mettre à jour systématique de la taille de la plus petite/grande zone mémoire (et potentiellement le pointeur pour y gagner en efficacité)
+     
+size_t est un type permettant d'effectuer des opérations sur les pointeurs (éviter les int pour manipuler les pointeurs) et à généralement la même taille que le pointeur.
+
+mem_show sert à afficher successivement toutes les zones mémoires occupées et libres (utile pour debug) avec les infos qu'elle affiche.
+Pour parcourir toutes les zones, il suffit de s'aider de la taille de la zone présente en début de chaque zone. Pour savoir si la zone en question est libre ou occupée on peut se passer d'un booléen (ça rajoute une métadonnée dans chaque case ...), il faut une cellule supplémentaire pour tester si la case actuelle est est une zone libre, la cellule prend en valeur ensuite la prochaine case libre (utiliser la liste chaînée).
+
+Une zone occupée est composée de :
+  - 1 octets pour la taille n de la zone mémoire demandée par l'utilisateur
+  - n octets correspondant à la zone mémoire demandée par l'utilisateur
+  - 0 à 7 octets pour garder l'aligment sur 8
+ ------> Pour un malloc de taille n, une zone occupée est de taille entre n+1 et n+8.
