@@ -17,6 +17,21 @@
 #define ALIGNMENT 16
 #endif
 
+struct fb {
+    // Taille, entête compris
+    size_t size;
+    struct fb *next;
+       /* ... */
+};
+
+struct zones_libres{
+    struct fb* tete;
+};
+
+struct zone_occupee{
+    size_t size;
+};
+
 /* structure placée au début de la zone de l'allocateur
 
    Elle contient toutes les variables globales nécessaires au
@@ -27,7 +42,10 @@
 struct allocator_header {
     size_t memory_size;
     mem_fit_function_t *fit;
+    struct zones_libres *liste_zone_libre;
+    int taille_max_zone_libre;
 };
+
 
 /* La seule variable globale autorisée
  * On trouve à cette adresse le début de la zone à gérer
@@ -49,14 +67,6 @@ static inline size_t get_system_memory_size() {
     return get_header()->memory_size;
 }
 
-struct fb {
-    // Taille, entête compris
-    size_t size;
-    struct fb *next;
-       /* ... */
-};
-
-
 void mem_init(void *mem, size_t taille) {
     memory_addr = mem;
     /* On vérifie qu'on a bien enregistré les infos et qu'on
@@ -67,18 +77,25 @@ void mem_init(void *mem, size_t taille) {
     get_header()->memory_size = taille;
     assert(taille == get_system_memory_size());
 
-    /* ... */
+    struct zones_libres* l;
+    l = memory_addr + sizeof(struct allocator_header);
+    l->tete->size = taille - sizeof(struct allocator_header);
+    l->tete->next = NULL;
+
+    get_header()->liste_zone_libre = l;
+    get_header()->taille_max_zone_libre = l->tete->size;
 
     /* On enregistre une fonction de recherche par défaut */
     mem_fit(&mem_fit_first);
 }
 
 void mem_show(void (*print)(void *, size_t, int)) {
-    /* ... */
-    while (/* ... */ 0) {
-        /* ... */
+    int taille_restante = get_header()->size;
+    int taille_zone_actuelle = 0;
+    while (taille_restante != 0) {
+        
         print(/* ... */ NULL, /* ... */ 0, /* ... */ 0);
-        /* ... */
+        taille_restante = taille_restante - taille_zone_actuelle;
     }
 }
 
