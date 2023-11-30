@@ -63,10 +63,9 @@ void mem_init(void *mem, size_t taille) {
      * sera capable de les récupérer par la suite
      */
     assert(mem == get_system_memory_addr());
-    /*
-    ... = taille
+    
+    get_header()->memory_size = taille;
     assert(taille == get_system_memory_size());
-    */
 
     /* ... */
 
@@ -84,7 +83,7 @@ void mem_show(void (*print)(void *, size_t, int)) {
 }
 
 void mem_fit(mem_fit_function_t *f) {
-    /* ... */
+    get_header()->fit = f;
 }
 
 void *mem_alloc(size_t taille) {
