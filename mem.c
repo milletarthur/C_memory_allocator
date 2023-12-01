@@ -63,6 +63,14 @@ static inline size_t get_system_memory_size() {
 	return get_header()->memory_size;
 }
 
+static inline size_t aligne_taille(size_t taille, int alignement){
+	return taille+alignement-(taille%alignement);
+}
+
+static inline void* aligne_adresse(void* adresse, int alignement){
+	return (void*)0;
+}
+
 void mem_init(void *mem, size_t taille) {
 	memory_addr = mem;
 	/* On vérifie qu'on a bien enregistré les infos et qu'on
@@ -125,7 +133,7 @@ void *mem_alloc(size_t taille) {
 	if (zones_libres == NULL){
 		return NULL;
 	}
-	return (void*)(zones_libres);
+	return (void*)zones_libres;
 
 }
 
