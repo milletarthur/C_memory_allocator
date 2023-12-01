@@ -16,7 +16,7 @@ void mem_show(void (*print)(void *adr, size_t size, int free));
 
 /* Choix de la stratégie et strategies usuelles */
 /* Si vous avez le temps... */
-typedef struct fb *(mem_fit_function_t)(struct fb *, size_t);
+typedef struct zones_libres *(mem_fit_function_t)(struct zones_libres *, size_t);
 
 void mem_fit(mem_fit_function_t *);
 mem_fit_function_t mem_fit_first;

@@ -90,7 +90,7 @@ void mem_init(void *mem, size_t taille) {
 }
 
 void mem_show(void (*print)(void *, size_t, int)) {
-    int taille_restante = get_header()->size;
+    int taille_restante = get_header()->memory_size;
     int taille_zone_actuelle = 0;
     while (taille_restante != 0) {
         
