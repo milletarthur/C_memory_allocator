@@ -36,6 +36,11 @@ mem_fit_best : on parcourt la liste des zones libres, et il faut 2 variables tem
 mem_fit_worst : on parcourt la liste des zones libres, et il faut 2 variables temporaires pour stocker la taille de la plus GRANDE zone qui pourraît être renvoyé par la fonction ainsi que le pointeur vers cette zone mémoire.
 
 
+
+Créer 2 fonctions pour aligner des taille (size_t) et des adresses (void*).
+
+
+
 ----------------------------------------------------------- A CHOISIR ----------------------------------------------------
 
   - La structure de zone contient un champs booléen (de type int) pour déterminer si la zone en question est une zone libre (1) ou occupé (tout sauf 1); 
