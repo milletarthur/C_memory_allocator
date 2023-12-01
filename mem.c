@@ -127,6 +127,29 @@ void mem_free(void *mem) {
 }
 
 struct zones_libres *mem_fit_first(struct zones_libres *list, size_t size) {
+	if(list == NULL){
+		return NULL;
+	}
+	if(list->size >= size){				// size ou size + ???
+		struct zones_libres* zl = list;
+		list = list->next;
+		return zl;
+	}
+	struct zones_libres* parcours_zones_libres = list;
+
+	while(parcours_zones_libres->next != NULL){
+		if(parcours_zones_libres->next->size >= size){
+			struct zones_libres* zl = parcours_zones_libres->next;
+			if(parcours_zones_libres->next->next != NULL){
+				parcours_zones_libres->next = parcours_zones_libres->next->next;
+			}
+			else{
+				parcours_zones_libres->next = NULL;
+			return zl;
+			}
+		}
+		parcours_zones_libres = parcours_zones_libres->next;
+	}
 	return NULL;
 }
 
