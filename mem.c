@@ -75,9 +75,6 @@ void mem_init(void *mem, size_t taille) {
 
 	struct zones_libres* l;
 	l = memory_addr + sizeof(struct allocator_header);
-	if (l%16 != 0){
-		l = l+16-l%16;
-	}
 	l->size = taille - sizeof(struct allocator_header);
 	l->next = NULL;
 
@@ -119,7 +116,7 @@ void mem_fit(mem_fit_function_t *f) {
 void *mem_alloc(size_t taille) {
 	/* ... */
 //	__attribute__((
-//				unused)) /* juste pour que gcc compile ce squelette avec -Werror */
+//				unused)) // juste pour que gcc compile ce squelette avec -Werror 
 //		struct zones_libres *zones_libres = get_header()->fit(...);
 	/* ... */
 //	return NULL;
@@ -128,7 +125,7 @@ void *mem_alloc(size_t taille) {
 	if (zones_libres == NULL){
 		return NULL;
 	}
-	return &(zones_libres);
+	return (void*)(zones_libres);
 
 }
 
