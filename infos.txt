@@ -30,3 +30,15 @@ Une zone occupée est composée de :
   - n octets correspondant à la zone mémoire demandée par l'utilisateur
   - 0 à 7 octets pour garder l'aligment sur 8
  ------> Pour un malloc de taille n, une zone occupée est de taille entre n+1 et n+8.
+
+mem_fit_best : on parcourt la liste des zones libres, et il faut 2 variables temporaires pour stocker la taille de la plus PETITE zone qui pourraît être renvoyé par la fonction ainsi que le pointeur vers cette zone mémoire.
+
+mem_fit_worst : on parcourt la liste des zones libres, et il faut 2 variables temporaires pour stocker la taille de la plus GRANDE zone qui pourraît être renvoyé par la fonction ainsi que le pointeur vers cette zone mémoire.
+
+
+----------------------------------------------------------- A CHOISIR ----------------------------------------------------
+
+  - La structure de zone contient un champs booléen (de type int) pour déterminer si la zone en question est une zone libre (1) ou occupé (tout sauf 1); 
+
+  - Ou sinon on parcourt la liste chaînée des zones libres, et avant de passé la zone suivante (ce qui veut dire qu'il y a une zone occupée entre), on sauvegarde l'adresse de la prochaine zone mémoire libre et on lit d'abord toutes les zones occupées en utilisant le champs size et tant qu'on est pasà l'adresse de la prochaine zone libre on continue de lire des zones mémoires occupées.
+
