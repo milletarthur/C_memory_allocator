@@ -20,7 +20,6 @@
 struct zones_libres {
 	// Taille, entête compris
 	size_t size;
-	int z_libre; 	// 1 pour zone libre et tout sauf 1 pour occupée
 	struct zones_libres *next;
 	/* ... */
 };
@@ -87,17 +86,14 @@ void mem_init(void *mem, size_t taille) {
 }
 
 void mem_show(void (*print)(void *, size_t, int)) {
-	int taille_restante = get_header()->memory_size;
+	int taille_restante = get_header()->memory_size - 32;    // taille_restante = mem_size - sizeof(header)
 	int taille_zone_actuelle = 0;
 	char* zone_actuelle = memory_addr + sizeof(struct allocator_header);		// vérifier que le char* fonctionne
 	int reste_zone_libre = 1;
 	// vérifier si c'est NULL
-	struct zones_libres* prochaine_zone_libre = get_header()->liste_zone_libre->next;
-	while (taille_restante != 0) {
+	struct zones_libres* prochaine_zone_libre = get_header()->liste_zone_libre;
+	while (taille_restante > 0) {
 		taille_zone_actuelle =*( (size_t*) zone_actuelle);
-		if( prochaine_zone_libre->next == NULL){
-			reste_zone_libre = 0;
-		}
 		if((zone_actuelle) == (char*)(prochaine_zone_libre) && reste_zone_libre == 1){		
 			print(zone_actuelle, taille_zone_actuelle, 1);
 			prochaine_zone_libre = prochaine_zone_libre->next;
@@ -107,6 +103,9 @@ void mem_show(void (*print)(void *, size_t, int)) {
 		}	
 		zone_actuelle = zone_actuelle + taille_zone_actuelle;
 		taille_restante = taille_restante - taille_zone_actuelle;
+		if(prochaine_zone_libre == NULL || prochaine_zone_libre->next == NULL){
+			reste_zone_libre = 0;
+		}
 	}
 }
 
