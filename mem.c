@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <string.h>
+#include <stdint.h>
 
 /* Définition de l'alignement recherché
  * Avec gcc, on peut utiliser __BIGGEST_ALIGNMENT__
@@ -63,12 +64,18 @@ static inline size_t get_system_memory_size() {
 	return get_header()->memory_size;
 }
 
+//static inline size_t aligne_taille(size_t taille, int alignement){
+//	return taille+alignement-(taille%alignement);
+//}
+
 static inline size_t aligne_taille(size_t taille, int alignement){
-	return taille+alignement-(taille%alignement);
+	return ((taille+(alignement-1))&~(alignement-1));
 }
 
 static inline void* aligne_adresse(void* adresse, int alignement){
-	return (void*)0;
+	size_t decalage = alignement -1;
+	uintptr_t adresse_alignee = ((uintptr_t)adresse + decalage) & ~decalage;
+	return (void*)adresse_alignee;
 }
 
 void mem_init(void *mem, size_t taille) {
