@@ -37,7 +37,9 @@ mem_fit_worst : on parcourt la liste des zones libres, et il faut 2 variables te
 
 
 
-Créer 2 fonctions pour aligner des taille (size_t) et des adresses (void*).
+Créer 2 fonctions pour aligner des taille (size_t) et des adresses (void*). --- FAIT
+
+Dans la fonction mem_alloc, la taille de la zone recherchée est de taille t ou de taille t + sizeof(size_t) ??????
 
 
 

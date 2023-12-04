@@ -136,23 +136,45 @@ void *mem_alloc(size_t taille) {
 	/* ... */
 //	return NULL;
 
+
 	struct zones_libres *zones_libres = get_header()->fit(get_header()->liste_zone_libre, taille);
 	if (zones_libres == NULL){
 		return NULL;
 	}
-	return (void*)zones_libres;
+	struct zones_libres *zl = mem_fit_first(zones_libres, taille + sizeof(size_t));			// juste taille ou taille + sizeof(size_t)
+	printf("adresse : %p\n",(void*)zl);
+	return (void*)zl;
 
 }
 
 
 void mem_free(void *mem) {
+	struct zones_libres* nouvelle_zone_libre = malloc(sizeof(struct zones_libres));
+	//cas ou la zone mémoire est juste à côté du bloc de métadonnée donc au début de la mémoire
+	if(mem == memory_addr + sizeof(struct allocator_header)){
+		//modifier les liens de chainage
+		nouvelle_zone_libre->next = get_header()->liste_zone_libre->next;
+		get_header()->liste_zone_libre = nouvelle_zone_libre;
+		// récupérer la taille t de la zone en question et la mettre à jour
+		if(t > get_header()->taille_max_zone_libre){
+			get_header()->taille_max_zone_libre = t;
+		}
+	}
+
+	//cas ou la zone est entre 2 zones occupées
+
+
+	//cas ou on est a cote d'une zone libre et du coup il faut fusionner les 2 zones libres en une.
+
+
+	//cas ou la zone est à la fin de la mémoire ???
 }
 
 struct zones_libres *mem_fit_first(struct zones_libres *list, size_t size) {
 	if(list == NULL){
 		return NULL;
 	}
-	if(list->size >= size){				// size ou size + ???
+	if(list->size >= size){
 		struct zones_libres* zl = list;
 		list = list->next;
 		return zl;
@@ -167,6 +189,7 @@ struct zones_libres *mem_fit_first(struct zones_libres *list, size_t size) {
 			}
 			else{
 				parcours_zones_libres->next = NULL;
+				printf("adresse : %p\n", (void*)zl);
 			return zl;
 			}
 		}
