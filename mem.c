@@ -29,6 +29,11 @@ struct zone_occupee{
 	size_t size;
 };
 
+union zone{
+	struct zones_libres zl;
+	struct zone_occupee zo;
+};
+
 /* structure placée au début de la zone de l'allocateur
 
    Elle contient toutes les variables globales nécessaires au
@@ -76,6 +81,47 @@ static inline void* aligne_adresse(void* adresse, int alignement){
 	size_t decalage = alignement -1;
 	uintptr_t adresse_alignee = ((uintptr_t)adresse + decalage) & ~decalage;
 	return (void*)adresse_alignee;
+}
+
+// Renvoie 0 si la zone mémoire est occupée et 1 si elle est libre
+static inline int type_zone(void* zone){
+	struct zones_libres* zl = get_header()->liste_zone_libre;
+	while((void*)zl != zone && zl->next != NULL){
+		zl = zl->next;
+	}
+	if((void*)zl == zone){
+		return 1;
+	}
+	return 0;
+}
+
+// Renvoie la zone libre ou la zone occupée correspondant
+/*static inline zone type_de_zone(void* zone){
+	struct zones_libres* zl = get->header()->liste_zone_libre;
+	while((void*)zl != zone && zl->next != NULL){
+		zl->next;
+	}
+	if((void*)zl == zone){
+		return zl;
+	}
+	struct zone_occupee* zo = 
+}*/
+
+// Renvoie la zone mémoire libre précédente
+static inline struct zones_libres* zone_precedente(struct zones_libres* zl){
+	struct zones_libres* libre = get_header()->liste_zone_libre;
+	while(libre->next != NULL && libre->next != zl){
+		libre = libre->next;
+	}
+	if(libre->next == zl){
+		return libre;
+	}
+	return NULL;
+}
+
+// Renvoie l'adresse du début de la zone mémoire suivante
+static inline void* zone_suivante(void* zone){
+	return NULL;
 }
 
 void mem_init(void *mem, size_t taille) {
@@ -136,8 +182,7 @@ void *mem_alloc(size_t taille) {
 	/* ... */
 //	return NULL;
 
-
-	struct zones_libres *zones_libres = get_header()->fit(get_header()->liste_zone_libre, taille);
+	struct zones_libres *zones_libres = get_header()->fit(get_header()->liste_zone_libre, taille + sizeof(size_t));
 	if (zones_libres == NULL){
 		return NULL;
 	}
@@ -149,17 +194,11 @@ void *mem_alloc(size_t taille) {
 
 
 void mem_free(void *mem) {
-	struct zones_libres* nouvelle_zone_libre = malloc(sizeof(struct zones_libres));
+	
+//	zone z = type_de_zone(mem);
+//	if(type(
 	//cas ou la zone mémoire est juste à côté du bloc de métadonnée donc au début de la mémoire
-	if(mem == memory_addr + sizeof(struct allocator_header)){
-		//modifier les liens de chainage
-		nouvelle_zone_libre->next = get_header()->liste_zone_libre->next;
-		get_header()->liste_zone_libre = nouvelle_zone_libre;
-		// récupérer la taille t de la zone en question et la mettre à jour
-		//if(t > get_header()->taille_max_zone_libre){
-		//	get_header()->taille_max_zone_libre = t;
-		//}
-	}
+
 
 	//cas ou la zone est entre 2 zones occupées
 
@@ -183,15 +222,7 @@ struct zones_libres *mem_fit_first(struct zones_libres *list, size_t size) {
 
 	while(parcours_zones_libres->next != NULL){
 		if(parcours_zones_libres->next->size >= size){
-			struct zones_libres* zl = parcours_zones_libres->next;
-			if(parcours_zones_libres->next->next != NULL){
-				parcours_zones_libres->next = parcours_zones_libres->next->next;
-			}
-			else{
-				parcours_zones_libres->next = NULL;
-				printf("adresse : %p\n", (void*)zl);
-			return zl;
-			}
+			return parcours_zones_libres->next;
 		}
 		parcours_zones_libres = parcours_zones_libres->next;
 	}
