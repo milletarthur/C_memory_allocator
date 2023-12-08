@@ -204,7 +204,8 @@ void *mem_alloc(size_t taille) {
 	 * return (void*)zl;
 	 */
 
-	size_t taille_pour_fct = taille; // + sizeof(size_t) + allignement 
+	size_t taille_pour_fct = taille + sizeof(size_t);	 // allignement
+	taille_pour_fct = aligne_taille(taille_pour_fct, 8);
 	struct zones_libres* case_a_remplir = get_header()->fit(get_header()->liste_zone_libre, taille_pour_fct);
 	if(case_a_remplir == NULL){ return NULL;}
 
@@ -217,6 +218,7 @@ void *mem_alloc(size_t taille) {
 	}
 
 		case_a_remplir->size = taille_pour_fct;
+
 		return (void*)case_a_remplir;
 }
 
