@@ -96,7 +96,7 @@ static inline int type_zone(void* zone){
 }
 
 // Renvoie la zone libre ou la zone occupée correspondant
-/*static inline zone type_de_zone(void* zone){
+static inline zone type_de_zone(void* zone){
 	struct zones_libres* zl = get->header()->liste_zone_libre;
 	while((void*)zl != zone && zl->next != NULL){
 		zl->next;
@@ -105,10 +105,10 @@ static inline int type_zone(void* zone){
 		return zl;
 	}
 	struct zone_occupee* zo = 
-}*/
+}
 
 // Renvoie la zone mémoire libre précédente
-static inline struct zones_libres* zone_precedente(struct zones_libres* zl){
+/*static inline struct zones_libres* zone_precedente(struct zones_libres* zl){
 	struct zones_libres* libre = get_header()->liste_zone_libre;
 	while(libre->next != NULL && libre->next != zl){
 		libre = libre->next;
@@ -117,7 +117,7 @@ static inline struct zones_libres* zone_precedente(struct zones_libres* zl){
 		return libre;
 	}
 	return NULL;
-}
+}*/
 
 // Renvoie l'adresse du début de la zone mémoire suivante
 static inline void* zone_suivante(void* zone){
