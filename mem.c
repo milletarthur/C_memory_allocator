@@ -156,9 +156,9 @@ void mem_free(void *mem) {
 		nouvelle_zone_libre->next = get_header()->liste_zone_libre->next;
 		get_header()->liste_zone_libre = nouvelle_zone_libre;
 		// récupérer la taille t de la zone en question et la mettre à jour
-		if(t > get_header()->taille_max_zone_libre){
-			get_header()->taille_max_zone_libre = t;
-		}
+		//if(t > get_header()->taille_max_zone_libre){
+		//	get_header()->taille_max_zone_libre = t;
+		//}
 	}
 
 	//cas ou la zone est entre 2 zones occupées
