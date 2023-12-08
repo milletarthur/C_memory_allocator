@@ -134,9 +134,23 @@ static inline struct zones_libres* zone_precedente(struct zones_libres* zl){
 	return NULL;
 }
 
+// Renvoie la zone mémoire précédente
+static inline void* zone_prec(void* zone){
+	struct zone_occupee* zo = memory_addr + sizeof(struct allocator_header);
+	while((void*)zo+zo->size != zone && (void*)zo+zo->size != NULL){
+		zo = zo+zo->size;
+	}
+	if((void*)zo+zo->size == zone){
+		return (void*)zo;
+	}
+	return NULL;
+}
+
 // Renvoie l'adresse du début de la zone mémoire suivante
 static inline void* zone_suivante(void* zone){
-	return NULL;
+	struct zone_occupee* zo = zone;
+	void* zone_suivante = (void*)zo + zo->size;
+	return zone_suivante;
 }
 
 void mem_init(void *mem, size_t taille) {
@@ -237,13 +251,33 @@ void *mem_alloc(size_t taille) {
 
 void mem_free(void *mem) {
 	
-	//struct zone z = type_de_zone(mem);
-	
+	struct zone z = type_de_zone(mem);
+	struct zone_occupee zo = z->zo;
+	struct zones_libres* liste_zl = get_header()->liste_zone_libre;
+	struct zone zone_suivante = type_de_zone(zone_suivante(mem));
+	struct zone zone_precedente = type_de_zone(zone_prec(mem));
+
 	//cas ou la zone mémoire est juste à côté du bloc de métadonnée donc au début de la mémoire
 
+	if(memory_addr == (void*)zo){
+		get_header()->liste_zone_libre = zo;
+		get_header()->liste_zone_libre->next = liste_zl;
+	}
 
 	//cas ou la zone est entre 2 zones occupées
 
+	if(zone_suivante->zo != NULL && zone_prec->zo != NULL){
+		while(liste->next != NULL){
+			if((void*)liste < mem && mem < (void*)liste->next){
+				struct zones_libres* nouvelle_zl = (struct zones_libres*)zo;
+				nouvelle_zl->size = zo->size;
+				zo->next = liste->next;
+				liste->next = zo;
+				return;				
+			}
+			liste = liste->next;
+		}
+	}
 
 	//cas ou on est a cote d'une zone libre et du coup il faut fusionner les 2 zones libres en une.
 
