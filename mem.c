@@ -182,14 +182,35 @@ void *mem_alloc(size_t taille) {
 	/* ... */
 //	return NULL;
 
-	struct zones_libres *zones_libres = get_header()->fit(get_header()->liste_zone_libre, taille + sizeof(size_t));
-	if (zones_libres == NULL){
-		return NULL;
-	}
-	struct zones_libres *zl = mem_fit_first(zones_libres, taille + sizeof(size_t));
-	printf("adresse : %p\n",(void*)zl);
-	return (void*)zl;
 
+	/* Il faut prendre la bonne zone mémoire et l'envoyer à mem_fit_first + gérer allignement 
+	 * mettre à jour zl 
+	 * return un pointeur vers la zone qui viens d'êetre allouée
+	 */
+	/*
+	 * struct zones_libres *zones_libres = get_header()->fit(get_header()->liste_zone_libre, taille);
+	 * if (zones_libres == NULL){
+	 * return NULL;
+	 * }
+	 * struct zones_libres *zl = mem_fit_first(zones_libres, taille + sizeof(size_t));
+	 * printf("adresse : %p\n",(void*)zl);
+	 * return (void*)zl;
+	 */
+
+	size_t taille_pour_fct = taille; // + sizeof(size_t) + allignement 
+	struct zones_libres* case_a_remplir = get_header()->fit(get_header()->liste_zone_libre, taille_pour_fct);
+	if(case_a_remplir == NULL){ return NULL;}
+
+	if(taille_pour_fct + sizeof(struct zone_libre) >= case_a_remplir->size){
+		struct zone_libre* pred_case_a_remplir = zone_precedente(case_a_remplir); //au caste près 
+		char* debut_zl_a_initialiser = (char*)pred_case_a_remplir + taille_pour_fct; // ?
+		pred_case_a_remplir->suivant = (zones_libres*)debut_zl_a_initialiser; // ?
+		pred_case_a_remplir->suivant->taille = case_a_remplir->taille - taille_pour_fct;
+		pred_case_a_remplir->suivant->suivant = case_a_remplir->suivant;
+	}
+
+		case_a_remplir->taille = taille_pour_fct;
+		return &case_a_remplir;
 }
 
 
