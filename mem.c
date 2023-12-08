@@ -96,7 +96,7 @@ static inline int type_zone(void* zone){
 }
 
 // Renvoie la zone libre ou la zone occupée correspondant
-/*static inline struct zone type_de_zone(void* zone){
+static inline struct zone type_de_zone(void* zone){
 	struct zones_libres* zl = get_header()->liste_zone_libre;
 	struct zone z;
 	z.zo = NULL;
@@ -109,18 +109,26 @@ static inline int type_zone(void* zone){
 		return z;
 	}
 	struct zone_occupee* zo = memory_addr + sizeof(struct allocator_header);
-	
-
+	while((void*)zo != zone && (void*)zo+zo->size != NULL){
+		zo = zo+zo->size;
+	}
+	if((void*)zo == zone){
+		z.zo = zo;
+		return z;
+	}
 	return z;	
-}*/
+}
 
 // Renvoie la zone mémoire libre précédente
 static inline struct zones_libres* zone_precedente(struct zones_libres* zl){
 	struct zones_libres* libre = get_header()->liste_zone_libre;
+	if(libre == NULL){
+		return NULL;
+	}
 	while(libre->next != NULL && libre->next != zl){
 		libre = libre->next;
 	}
-	if(libre->next == zl){
+	if(libre == zl){
 		return libre;
 	}
 	return NULL;
@@ -219,7 +227,7 @@ void *mem_alloc(size_t taille) {
 	}
 
 		case_a_remplir->size = taille_pour_fct;
-
+		
 		return (void*)case_a_remplir;
 }
 
