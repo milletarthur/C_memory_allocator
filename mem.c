@@ -211,6 +211,7 @@ void *mem_alloc(size_t taille) {
 
 	if(taille_pour_fct + sizeof(struct zones_libres) >= case_a_remplir->size){
 		struct zones_libres* pred_case_a_remplir = zone_precedente(case_a_remplir); //au caste près 
+		if (pred_case_a_remplir == NULL){ printf("oups\n");}
 		char* debut_zl_a_initialiser = (char*)pred_case_a_remplir + taille_pour_fct; // ?
 		pred_case_a_remplir->next = (struct zones_libres*)debut_zl_a_initialiser; // ?
 		pred_case_a_remplir->next->size = case_a_remplir->size - taille_pour_fct;
