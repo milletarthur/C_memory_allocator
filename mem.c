@@ -96,8 +96,8 @@ static inline int type_zone(void* zone){
 }
 
 // Renvoie la zone libre ou la zone occupée correspondant
-static inline zone type_de_zone(void* zone){
-	struct zones_libres* zl = get->header()->liste_zone_libre;
+static inline struct zone type_de_zone(void* zone){
+	struct zones_libres* zl = get_header()->liste_zone_libre;
 	while((void*)zl != zone && zl->next != NULL){
 		zl->next;
 	}
@@ -108,7 +108,7 @@ static inline zone type_de_zone(void* zone){
 }
 
 // Renvoie la zone mémoire libre précédente
-/*static inline struct zones_libres* zone_precedente(struct zones_libres* zl){
+static inline struct zones_libres* zone_precedente(struct zones_libres* zl){
 	struct zones_libres* libre = get_header()->liste_zone_libre;
 	while(libre->next != NULL && libre->next != zl){
 		libre = libre->next;
@@ -117,7 +117,7 @@ static inline zone type_de_zone(void* zone){
 		return libre;
 	}
 	return NULL;
-}*/
+}
 
 // Renvoie l'adresse du début de la zone mémoire suivante
 static inline void* zone_suivante(void* zone){
@@ -201,16 +201,16 @@ void *mem_alloc(size_t taille) {
 	struct zones_libres* case_a_remplir = get_header()->fit(get_header()->liste_zone_libre, taille_pour_fct);
 	if(case_a_remplir == NULL){ return NULL;}
 
-	if(taille_pour_fct + sizeof(struct zone_libre) >= case_a_remplir->size){
-		struct zone_libre* pred_case_a_remplir = zone_precedente(case_a_remplir); //au caste près 
+	if(taille_pour_fct + sizeof(struct zones_libres) >= case_a_remplir->size){
+		struct zones_libres* pred_case_a_remplir = zone_precedente(case_a_remplir); //au caste près 
 		char* debut_zl_a_initialiser = (char*)pred_case_a_remplir + taille_pour_fct; // ?
-		pred_case_a_remplir->suivant = (zones_libres*)debut_zl_a_initialiser; // ?
-		pred_case_a_remplir->suivant->taille = case_a_remplir->taille - taille_pour_fct;
-		pred_case_a_remplir->suivant->suivant = case_a_remplir->suivant;
+		pred_case_a_remplir->next = (struct zones_libres*)debut_zl_a_initialiser; // ?
+		pred_case_a_remplir->next->size = case_a_remplir->size - taille_pour_fct;
+		pred_case_a_remplir->next->next = case_a_remplir->next;
 	}
 
-		case_a_remplir->taille = taille_pour_fct;
-		return &case_a_remplir;
+		case_a_remplir->size = taille_pour_fct;
+		return (void*)case_a_remplir;
 }
 
 
