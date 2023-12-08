@@ -29,9 +29,9 @@ struct zone_occupee{
 	size_t size;
 };
 
-union zone{
-	struct zones_libres zl;
-	struct zone_occupee zo;
+struct zone{
+	struct zones_libres* zl;
+	struct zone_occupee* zo;
 };
 
 /* structure placée au début de la zone de l'allocateur
@@ -96,19 +96,26 @@ static inline int type_zone(void* zone){
 }
 
 // Renvoie la zone libre ou la zone occupée correspondant
-static inline zone type_de_zone(void* zone){
-	struct zones_libres* zl = get->header()->liste_zone_libre;
+/*static inline struct zone type_de_zone(void* zone){
+	struct zones_libres* zl = get_header()->liste_zone_libre;
+	struct zone z;
+	z.zo = NULL;
+	z.zl = NULL;
 	while((void*)zl != zone && zl->next != NULL){
-		zl->next;
+		zl = zl->next;
 	}
 	if((void*)zl == zone){
-		return zl;
+		z.zl = zl;
+		return z;
 	}
-	struct zone_occupee* zo = 
-}
+	struct zone_occupee* zo = memory_addr + sizeof(struct allocator_header);
+	
+
+	return z;	
+}*/
 
 // Renvoie la zone mémoire libre précédente
-/*static inline struct zones_libres* zone_precedente(struct zones_libres* zl){
+static inline struct zones_libres* zone_precedente(struct zones_libres* zl){
 	struct zones_libres* libre = get_header()->liste_zone_libre;
 	while(libre->next != NULL && libre->next != zl){
 		libre = libre->next;
@@ -117,7 +124,7 @@ static inline zone type_de_zone(void* zone){
 		return libre;
 	}
 	return NULL;
-}*/
+}
 
 // Renvoie l'adresse du début de la zone mémoire suivante
 static inline void* zone_suivante(void* zone){
@@ -216,8 +223,8 @@ void *mem_alloc(size_t taille) {
 
 void mem_free(void *mem) {
 	
-//	zone z = type_de_zone(mem);
-//	if(type(
+	//struct zone z = type_de_zone(mem);
+	
 	//cas ou la zone mémoire est juste à côté du bloc de métadonnée donc au début de la mémoire
 
 
