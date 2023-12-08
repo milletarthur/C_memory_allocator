@@ -41,7 +41,10 @@ Créer 2 fonctions pour aligner des taille (size_t) et des adresses (void*). ---
 
 Dans la fonction mem_alloc, la taille de la zone recherchée est de taille t ou de taille t + sizeof(size_t) ??????
 
-
+Fonctions annexes : 
+	- size_t get_size(void* mem) : renvoie la taille de la zone mémoire
+	- void* zone_prec(void* mem) : renvoie la zone mémoire précédente
+	- void* zone_suivante(void* mem) : renvoie la zone mémoire suivante
 
 ----------------------------------------------------------- A CHOISIR ----------------------------------------------------
 

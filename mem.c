@@ -141,7 +141,7 @@ void *mem_alloc(size_t taille) {
 	if (zones_libres == NULL){
 		return NULL;
 	}
-	struct zones_libres *zl = mem_fit_first(zones_libres, taille + sizeof(size_t));			// juste taille ou taille + sizeof(size_t)
+	struct zones_libres *zl = mem_fit_first(zones_libres, taille + sizeof(size_t));
 	printf("adresse : %p\n",(void*)zl);
 	return (void*)zl;
 
