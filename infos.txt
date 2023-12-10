@@ -46,6 +46,10 @@ Fonctions annexes :
 	- void* zone_prec(void* mem) : renvoie la zone mémoire précédente
 	- void* zone_suivante(void* mem) : renvoie la zone mémoire suivante
 
+
+Pour corriger les derniers bugs : certaines variables ont le même nom que certaines fonction donc changer l'un ou l'autre 
+		---> ex : zone_precedente est à la fois une variable et une fonction
+
 ----------------------------------------------------------- A CHOISIR ----------------------------------------------------
 
   - La structure de zone contient un champs booléen (de type int) pour déterminer si la zone en question est une zone libre (1) ou occupé (tout sauf 1); 

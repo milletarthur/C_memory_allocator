@@ -96,7 +96,7 @@ static inline int type_zone(void* zone){
 }
 
 // Renvoie la zone libre ou la zone occupée correspondant
-static inline struct zone type_de_zone(void* zone){
+struct zone type_de_zone(void* zone){
 	struct zones_libres* zl = get_header()->liste_zone_libre;
 	struct zone z;
 	z.zo = NULL;
@@ -120,7 +120,7 @@ static inline struct zone type_de_zone(void* zone){
 }
 
 // Renvoie la zone mémoire libre précédente
-static inline struct zones_libres* zone_precedente(struct zones_libres* zl){
+struct zones_libres* zone_precedente(struct zones_libres* zl){
 	struct zones_libres* libre = get_header()->liste_zone_libre;
 	if(libre == NULL){
 		return NULL;
@@ -135,7 +135,7 @@ static inline struct zones_libres* zone_precedente(struct zones_libres* zl){
 }
 
 // Renvoie la zone mémoire précédente
-static inline void* zone_prec(void* zone){
+void* zone_prec(void* zone){
 	struct zone_occupee* zo = memory_addr + sizeof(struct allocator_header);
 	while((void*)zo+zo->size != zone && (void*)zo+zo->size != NULL){
 		zo = zo+zo->size;
@@ -147,7 +147,7 @@ static inline void* zone_prec(void* zone){
 }
 
 // Renvoie l'adresse du début de la zone mémoire suivante
-static inline void* zone_suivante(void* zone){
+void* zone_suivante(void* zone){
 	struct zone_occupee* zo = zone;
 	void* zone_suivante = (void*)zo + zo->size;
 	return zone_suivante;
@@ -252,37 +252,64 @@ void *mem_alloc(size_t taille) {
 void mem_free(void *mem) {
 	
 	struct zone z = type_de_zone(mem);
-	struct zone_occupee zo = z->zo;
+	struct zone_occupee* zo = z.zo;				// le compilateur me propose zo = zo et ça fonctionne mais ça veut rien dire ....
 	struct zones_libres* liste_zl = get_header()->liste_zone_libre;
-	struct zone zone_suivante = type_de_zone(zone_suivante(mem));
-	struct zone zone_precedente = type_de_zone(zone_prec(mem));
+	struct zone var_zone_suivante = type_de_zone(zone_suivante(mem));
+	struct zone var_zone_precedente = type_de_zone(zone_prec(mem));
+	struct zones_libres* nouvelle_zl = (struct zones_libres*)&zo;
+	nouvelle_zl->size = zo->size;
 
 	//cas ou la zone mémoire est juste à côté du bloc de métadonnée donc au début de la mémoire
 
-	if(memory_addr == (void*)zo){
-		get_header()->liste_zone_libre = zo;
+	if(memory_addr == &zo){
+		get_header()->liste_zone_libre = nouvelle_zl;
 		get_header()->liste_zone_libre->next = liste_zl;
 	}
 
 	//cas ou la zone est entre 2 zones occupées
 
-	if(zone_suivante->zo != NULL && zone_prec->zo != NULL){
-		while(liste->next != NULL){
-			if((void*)liste < mem && mem < (void*)liste->next){
-				struct zones_libres* nouvelle_zl = (struct zones_libres*)zo;
-				nouvelle_zl->size = zo->size;
-				zo->next = liste->next;
-				liste->next = zo;
+	if(var_zone_suivante.zo != NULL && var_zone_precedente.zo != NULL){
+		while(liste_zl->next != NULL){
+			if((void*)liste_zl < mem && mem < (void*)liste_zl->next){
+				nouvelle_zl->next = liste_zl->next;
+				liste_zl->next = nouvelle_zl;
 				return;				
 			}
-			liste = liste->next;
+			liste_zl = liste_zl->next;
 		}
 	}
 
 	//cas ou on est a cote d'une zone libre et du coup il faut fusionner les 2 zones libres en une.
+	//cas où la zone précédente est libre et la suivante est occupée	
+	if(var_zone_precedente.zl != NULL && var_zone_suivante.zo != NULL){
+		nouvelle_zl->next = var_zone_precedente.zl->next;
+		var_zone_precedente.zl->next = nouvelle_zl;
+		var_zone_precedente.zl->size += nouvelle_zl->size;
+		return;
+	}
 
+	//cas où la zone précédente est occupée et la suivante est libre
+	if(var_zone_precedente.zo != NULL && var_zone_suivante.zl != NULL){
+
+		struct zones_libres* zl_prec = zone_precedente(var_zone_suivante.zl);
+		nouvelle_zl->next = zl_prec->next;
+		nouvelle_zl->size += var_zone_suivante.zl->size;
+		zl_prec->next = nouvelle_zl;
+		return;
+	}
+
+	//cas où la zone précédente et la zone suivante sont libres
+	if(var_zone_precedente.zl != NULL && var_zone_suivante.zl != NULL){
+		var_zone_precedente.zl->size = var_zone_precedente.zl->size + nouvelle_zl->size + var_zone_suivante.zl->size;
+		nouvelle_zl->next = var_zone_precedente.zl->next;
+		var_zone_precedente.zl->next = nouvelle_zl;
+		return;
+	}
 
 	//cas ou la zone est à la fin de la mémoire ???
+	//if(zo+zo->size == NULL){				// pas du tout sur de ce que je fais là 
+	//	
+	//}
 }
 
 struct zones_libres *mem_fit_first(struct zones_libres *list, size_t size) {
