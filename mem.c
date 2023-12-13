@@ -200,7 +200,7 @@ void mem_show(void (*print)(void *, size_t, int)) {
 			prochaine_zone_libre = prochaine_zone_libre->next;
 		}
 		else{
-			print(zone_actuelle, taille_zone_actuelle, 0);
+			print(zone_actuelle + sizeof(size_t), taille_zone_actuelle - sizeof(size_t), 0);
 		}	
 		zone_actuelle = zone_actuelle + taille_zone_actuelle;
 		taille_restante = taille_restante - taille_zone_actuelle;
@@ -357,24 +357,20 @@ void mem_free(void *mem) {
 
 */
 
-void mem_free(void *mem){
-
-	struct zones_libres* nouvelle_zl;
-	nouvelle_zl->size = mem - sizeof(size_t);
-	
-	get_header()->memory_size += nouvelle_zl->size;
-
-	
-	// cas où la zone mémoire est juste a côté du header --> modifier la tete de la liste des zones libres
-	
-	// cas où la zone précédente est libre
-	
-	// cas où la zone suivante est libre
-	
-	// cas entre 2 zones occupées
+void fusionner_zl(){
+	struct zones_libres* a_fusionner = get_header()->liste_zone_libre;
+	void* next_zone = (void*) a_fusionner;
+	while ((!a_fusionner) &&  (a_fusionner->next != NULL)){
+		next_zone = (void *)((char*) next_zone + a_fusionner->size);
+		while((!a_fusionner->next) && ((void*) a_fusionner->next) == (next_zone)){
+			next_zone = (void *)((char*) next_zone + a_fusionner->next->size);
+			a_fusionner->size += a_fusionner->next->size;
+			a_fusionner->next = a_fusionner->next->next;
+		}
+		a_fusionner = a_fusionner->next;
 
 }
-
+}
 
 struct zones_libres *mem_fit_first(struct zones_libres *list, size_t size) {
 	if(list == NULL){
