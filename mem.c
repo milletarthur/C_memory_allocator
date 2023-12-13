@@ -252,11 +252,14 @@ void *mem_alloc(size_t taille) {
 		if (pred_case_a_remplir == case_a_remplir){
 			get_header()->liste_zone_libre = (struct zones_libres*)debut_zl_a_initialiser;
 		}
+	} else {
+		taille_pour_fct += case_a_remplir->size - taille_pour_fct;
 	}
 
-		case_a_remplir->size = taille_pour_fct;
-		
-		return (void*)case_a_remplir;
+	case_a_remplir->size = taille_pour_fct;
+	
+	void* rv = (char*)case_a_remplir + sizeof(size_t);
+	return rv;
 }
 
 
