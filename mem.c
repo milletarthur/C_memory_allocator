@@ -262,21 +262,23 @@ void *mem_alloc(size_t taille) {
 	return rv;
 }
 
-
+/*
 void mem_free(void *mem) {
 	
 	struct zone z = type_de_zone(mem);
 	struct zone_occupee* zo = z.zo;
 	struct zones_libres* liste_zl = get_header()->liste_zone_libre;
-	struct zones_libres* tete = liste_zl;		// pas utile ??
+	struct zones_libres* tete = liste_zl;					// pas utile ??
 	struct zone var_zone_suivante = type_de_zone(zone_suivante(mem));
 	struct zone var_zone_precedente = type_de_zone(zone_prec(mem));
 	struct zones_libres* nouvelle_zl = (struct zones_libres*)&zo;
-	nouvelle_zl->size = zo->size;
+	nouvelle_zl->size = z.zo->size;
+
+	printf("size : %ld\n", nouvelle_zl->size);	
 
 	//cas ou la zone mémoire est juste à côté du bloc de métadonnée donc au début de la mémoire
 	
-	printf("&zo = %p\n",&zo);
+	printf("&zo = %p\n",zo);
 	printf("memory_addr + sizeof(header) = %p\n", memory_addr + sizeof(struct allocator_header));
 
 	if(memory_addr + sizeof(struct allocator_header) == zo){
@@ -352,6 +354,26 @@ void mem_free(void *mem) {
 	//	
 	//}
 }
+
+*/
+
+void mem_free(void *mem){
+
+	struct zones_libres* nouvelle_zl;
+	nouvelle_zl->size = mem - sizeof(size_t);
+	
+	get_header()->memory_size += nouvelle_size;
+	
+	// cas où la zone mémoire est juste a côté du header --> modifier la tete de la liste des zones libres
+	
+	// cas où la zone précédente est libre
+	
+	// cas où la zone suivante est libre
+	
+	// cas entre 2 zones occupées
+
+}
+
 
 struct zones_libres *mem_fit_first(struct zones_libres *list, size_t size) {
 	if(list == NULL){
