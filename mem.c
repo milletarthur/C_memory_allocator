@@ -359,7 +359,8 @@ void mem_free(void *mem){
 	struct zones_libres* nouvelle_zl;
 	nouvelle_zl->size = mem - sizeof(size_t);
 	
-	get_header()->memory_size += nouvelle_size;
+	get_header()->memory_size += nouvelle_zl->size;
+
 	
 	// cas où la zone mémoire est juste a côté du header --> modifier la tete de la liste des zones libres
 	
