@@ -101,20 +101,28 @@ struct zone type_de_zone(void* zone){
 	struct zone z;
 	z.zo = NULL;
 	z.zl = NULL;
-	while((void*)zl != zone && zl->next != NULL){
+	
+	if((void*)zl > zone){
+		z.zo = memory_addr + sizeof(struct allocator_header);
+		return z;	
+	}
+
+	while(zl != NULL){
+		//if((void*)zl == zone){
+		if(zl == (struct zones_libres*)zone){
+			z.zl = zl;
+			return z;
+		}
 		zl = zl->next;
 	}
-	if((void*)zl == zone){
-		z.zl = zl;
-		return z;
-	}
+
 	struct zone_occupee* zo = memory_addr + sizeof(struct allocator_header);
-	while((void*)zo != zone && (void*)zo+zo->size != NULL){
+	while((void*)zo != NULL){
+		if((void*)zo == zone){
+			z.zo = zo;
+			return z;
+		}
 		zo = zo+zo->size;
-	}
-	if((void*)zo == zone){
-		z.zo = zo;
-		return z;
 	}
 	return z;	
 }
@@ -137,6 +145,9 @@ struct zones_libres* zone_precedente(struct zones_libres* zl){
 // Renvoie la zone mémoire précédente
 void* zone_prec(void* zone){
 	struct zone_occupee* zo = memory_addr + sizeof(struct allocator_header);
+	if((void*)zo == zone){		// la zone mémoire précédente est le bloc de métadonnées
+		return NULL;
+	}
 	while((void*)zo+zo->size != zone && (void*)zo+zo->size != NULL){
 		zo = zo+zo->size;
 	}
@@ -252,18 +263,24 @@ void *mem_alloc(size_t taille) {
 void mem_free(void *mem) {
 	
 	struct zone z = type_de_zone(mem);
-	struct zone_occupee* zo = z.zo;				// le compilateur me propose zo = zo et ça fonctionne mais ça veut rien dire ....
+	struct zone_occupee* zo = z.zo;
 	struct zones_libres* liste_zl = get_header()->liste_zone_libre;
+	struct zones_libres* tete = liste_zl;		// pas utile ??
 	struct zone var_zone_suivante = type_de_zone(zone_suivante(mem));
 	struct zone var_zone_precedente = type_de_zone(zone_prec(mem));
 	struct zones_libres* nouvelle_zl = (struct zones_libres*)&zo;
 	nouvelle_zl->size = zo->size;
 
 	//cas ou la zone mémoire est juste à côté du bloc de métadonnée donc au début de la mémoire
+	
+	printf("&zo = %p\n",&zo);
+	printf("memory_addr + sizeof(header) = %p\n", memory_addr + sizeof(struct allocator_header));
 
-	if(memory_addr == &zo){
+	if(memory_addr + sizeof(struct allocator_header) == zo){
 		get_header()->liste_zone_libre = nouvelle_zl;
 		get_header()->liste_zone_libre->next = liste_zl;
+		get_header()->memory_size += nouvelle_zl->size;
+		return;
 	}
 
 	//cas ou la zone est entre 2 zones occupées
@@ -273,6 +290,7 @@ void mem_free(void *mem) {
 			if((void*)liste_zl < mem && mem < (void*)liste_zl->next){
 				nouvelle_zl->next = liste_zl->next;
 				liste_zl->next = nouvelle_zl;
+				get_header()->liste_zone_libre = tete; 		// ???
 				return;				
 			}
 			liste_zl = liste_zl->next;
@@ -282,27 +300,47 @@ void mem_free(void *mem) {
 	//cas ou on est a cote d'une zone libre et du coup il faut fusionner les 2 zones libres en une.
 	//cas où la zone précédente est libre et la suivante est occupée	
 	if(var_zone_precedente.zl != NULL && var_zone_suivante.zo != NULL){
-		nouvelle_zl->next = var_zone_precedente.zl->next;
-		var_zone_precedente.zl->next = nouvelle_zl;
-		var_zone_precedente.zl->size += nouvelle_zl->size;
+		//nouvelle_zl->next = var_zone_precedente.zl->next;
+		//var_zone_precedente.zl->next = nouvelle_zl;
+		//var_zone_precedente.zl->size += nouvelle_zl->size;
+		
+		while(liste_zl != var_zone_precedente.zl){
+			liste_zl = liste_zl->next;
+		}
+		nouvelle_zl->next = liste_zl->next;
+		liste_zl->next = nouvelle_zl;
+		liste_zl->size += nouvelle_zl->size;
+
+		get_header()->liste_zone_libre = tete;				// ???
 		return;
 	}
 
 	//cas où la zone précédente est occupée et la suivante est libre
 	if(var_zone_precedente.zo != NULL && var_zone_suivante.zl != NULL){
 
-		struct zones_libres* zl_prec = zone_precedente(var_zone_suivante.zl);
-		nouvelle_zl->next = zl_prec->next;
-		nouvelle_zl->size += var_zone_suivante.zl->size;
-		zl_prec->next = nouvelle_zl;
+		//struct zones_libres* zl_prec = zone_precedente(var_zone_suivante.zl);
+		//nouvelle_zl->next = zl_prec->next;
+		//nouvelle_zl->size += var_zone_suivante.zl->size;
+		//zl_prec->next = nouvelle_zl;
+
+		while(liste_zl->next != var_zone_suivante.zl){
+			liste_zl = liste_zl->next;
+		}
+		nouvelle_zl->next = liste_zl->next;
+		liste_zl->next = nouvelle_zl;
+		liste_zl->size += var_zone_suivante.zl->size;
+		
+		get_header()->liste_zone_libre = tete;				// ???
 		return;
 	}
 
-	//cas où la zone précédente et la zone suivante sont libres
+	//cas où la zone précédente et la zone suivante sont libres --> fusionner les 3 zones en une
 	if(var_zone_precedente.zl != NULL && var_zone_suivante.zl != NULL){
 		var_zone_precedente.zl->size = var_zone_precedente.zl->size + nouvelle_zl->size + var_zone_suivante.zl->size;
 		nouvelle_zl->next = var_zone_precedente.zl->next;
 		var_zone_precedente.zl->next = nouvelle_zl;
+		
+		//get_header()->liste_zone_libre = ????
 		return;
 	}
 
