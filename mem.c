@@ -156,7 +156,7 @@ struct zone type_de_zone(void* zone){
 		}
 		return NULL;
 	}
-/*
+
 	// Renvoie l'adresse du début de la zone mémoire suivante
 	void* zone_suivante(void* zone){
 		struct zone_occupee* zo = zone;
@@ -164,11 +164,16 @@ struct zone type_de_zone(void* zone){
 		return zone_suivante;
 	}
 
+	void mem_fit(mem_fit_function_t *f) {
+		get_header()->fit = f;
+	}
+
+
 	void mem_init(void *mem, size_t taille) {
 		memory_addr = mem;
-		// On vérifie qu'on a bien enregistré les infos et qu'on
-		 // sera capable de les récupérer par la suite
-		 //
+		/* On vérifie qu'on a bien enregistré les infos et qu'on
+		 * sera capable de les récupérer par la suite
+		 */
 		assert(mem == get_system_memory_addr());
 
 		get_header()->memory_size = taille;
@@ -182,89 +187,35 @@ struct zone type_de_zone(void* zone){
 		get_header()->liste_zone_libre = l;
 		get_header()->taille_max_zone_libre = l->size;
 
-		//On enregistre une fonction de recherche par défaut 
+		/* On enregistre une fonction de recherche par défaut */
 		mem_fit(&mem_fit_first);
 	}
-*/
-// Renvoie l'adresse du début de la zone mémoire suivante
-void* zone_suivante(void* zone){
-	struct zone_occupee* zo = zone;
-	void* zone_suivante = (void*)zo + zo->size;
-	return zone_suivante;
-}
 
-void mem_init(void *mem, size_t taille) {
-	memory_addr = mem;
-	/* On vérifie qu'on a bien enregistré les infos et qu'on
-	 * sera capable de les récupérer par la suite
-	 */
-	assert(mem == get_system_memory_addr());
-
-	get_header()->memory_size = taille;
-	assert(taille == get_system_memory_size());
-
-	struct zones_libres* l;
-	l = memory_addr + sizeof(struct allocator_header);
-	l->size = taille - sizeof(struct allocator_header);
-	l->next = NULL;
-
-	get_header()->liste_zone_libre = l;
-	get_header()->taille_max_zone_libre = l->size;
-
-	/* On enregistre une fonction de recherche par défaut */
-	mem_fit(&mem_fit_first);
-}
-
-void mem_show(void (*print)(void *, size_t, int)) {
-	int taille_restante = get_header()->memory_size - 32;    // taille_restante = mem_size - sizeof(header)
-	int taille_zone_actuelle = 0;
-	char* zone_actuelle = memory_addr + sizeof(struct allocator_header);		// vérifier que le char* fonctionne
-	int reste_zone_libre = 1;
-	// vérifier si c'est NULL
-	struct zones_libres* prochaine_zone_libre = get_header()->liste_zone_libre;
-	while (taille_restante > 0) {
-		taille_zone_actuelle =*( (size_t*) zone_actuelle);
-		if((zone_actuelle) == (char*)(prochaine_zone_libre) && reste_zone_libre == 1){		
-			print(zone_actuelle, taille_zone_actuelle, 1);
-			prochaine_zone_libre = prochaine_zone_libre->next;
+	void mem_show(void (*print)(void *, size_t, int)) {
+		int taille_restante = get_header()->memory_size - 32;    // taille_restante = mem_size - sizeof(header)
+		int taille_zone_actuelle = 0;
+		char* zone_actuelle = memory_addr + sizeof(struct allocator_header);		// vérifier que le char* fonctionne
+		int reste_zone_libre = 1;
+		// vérifier si c'est NULL
+		struct zones_libres* prochaine_zone_libre = get_header()->liste_zone_libre;
+		while (taille_restante > 0) {
+			taille_zone_actuelle =*( (size_t*) zone_actuelle);
+			if((zone_actuelle) == (char*)(prochaine_zone_libre) && reste_zone_libre == 1){		
+				print(zone_actuelle, taille_zone_actuelle, 1);
+				prochaine_zone_libre = prochaine_zone_libre->next;
+			}
+			else{
+				print(zone_actuelle + sizeof(size_t), taille_zone_actuelle - sizeof(size_t), 0);
+			}	
+			zone_actuelle = zone_actuelle + taille_zone_actuelle;
+			taille_restante = taille_restante - taille_zone_actuelle;
+			if(prochaine_zone_libre == NULL || prochaine_zone_libre->next == NULL){
+				reste_zone_libre = 0;
+			}
 		}
-		else{
-			print(zone_actuelle + sizeof(size_t), taille_zone_actuelle - sizeof(size_t), 0);
-		}	
-		zone_actuelle = zone_actuelle + taille_zone_actuelle;
-		taille_restante = taille_restante - taille_zone_actuelle;
-		if(prochaine_zone_libre == NULL || prochaine_zone_libre->next == NULL){
-			reste_zone_libre = 0;
-		}
-	}
-
-	void mem_fit(mem_fit_function_t *f) {
-		get_header()->fit = f;
 	}
 
 	void *mem_alloc(size_t taille) {
-		/* ... */
-		//	__attribute__((
-		//				unused)) // juste pour que gcc compile ce squelette avec -Werror 
-		//		struct zones_libres *zones_libres = get_header()->fit(...);
-		/* ... */
-		//	return NULL;
-
-
-		/* Il faut prendre la bonne zone mémoire et l'envoyer à mem_fit_first + gérer allignement 
-		 * mettre à jour zl 
-		 * return un pointeur vers la zone qui viens d'êetre allouée
-		 */
-		/*
-		 * struct zones_libres *zones_libres = get_header()->fit(get_header()->liste_zone_libre, taille);
-		 * if (zones_libres == NULL){
-		 * return NULL;
-		 * }
-		 * struct zones_libres *zl = mem_fit_first(zones_libres, taille + sizeof(size_t));
-		 * printf("adresse : %p\n",(void*)zl);
-		 * return (void*)zl;
-		 */
-
 		size_t taille_pour_fct = taille + sizeof(size_t);	 // allignement
 		taille_pour_fct = aligne_taille(taille_pour_fct, 8);
 		struct zones_libres* case_a_remplir = get_header()->fit(get_header()->liste_zone_libre, taille_pour_fct);
@@ -277,6 +228,7 @@ void mem_show(void (*print)(void *, size_t, int)) {
 			pred_case_a_remplir->next = (struct zones_libres*)debut_zl_a_initialiser; // ?
 			pred_case_a_remplir->next->size = case_a_remplir->size - taille_pour_fct;
 			pred_case_a_remplir->next->next = case_a_remplir->next;
+
 			if (pred_case_a_remplir == case_a_remplir){
 				get_header()->liste_zone_libre = (struct zones_libres*)debut_zl_a_initialiser;
 			}
@@ -290,200 +242,108 @@ void mem_show(void (*print)(void *, size_t, int)) {
 		return rv;
 	}
 
-	/*
-	   void mem_free(void *mem) {
-
-	   struct zone z = type_de_zone(mem);
-	   struct zone_occupee* zo = z.zo;
-	   struct zones_libres* liste_zl = get_header()->liste_zone_libre;
-	   struct zones_libres* tete = liste_zl;					// pas utile ??
-	   struct zone var_zone_suivante = type_de_zone(zone_suivante(mem));
-	   struct zone var_zone_precedente = type_de_zone(zone_prec(mem));
-	   struct zones_libres* nouvelle_zl = (struct zones_libres*)&zo;
-	   nouvelle_zl->size = z.zo->size;
-
-	   printf("size : %ld\n", nouvelle_zl->size);	
-
-	//cas ou la zone mémoire est juste à côté du bloc de métadonnée donc au début de la mémoire
-
-	printf("&zo = %p\n",zo);
-	printf("memory_addr + sizeof(header) = %p\n", memory_addr + sizeof(struct allocator_header));
-
-	if(memory_addr + sizeof(struct allocator_header) == zo){
-	get_header()->liste_zone_libre = nouvelle_zl;
-	get_header()->liste_zone_libre->next = liste_zl;
-	get_header()->memory_size += nouvelle_zl->size;
-	return;
-	}
-
-	//cas ou la zone est entre 2 zones occupées
-
-	if(var_zone_suivante.zo != NULL && var_zone_precedente.zo != NULL){
-	while(liste_zl->next != NULL){
-	if((void*)liste_zl < mem && mem < (void*)liste_zl->next){
-	nouvelle_zl->next = liste_zl->next;
-	liste_zl->next = nouvelle_zl;
-	get_header()->liste_zone_libre = tete; 		// ???
-	return;				
-	}
-	liste_zl = liste_zl->next;
-	}
-	}
-
-	//cas ou on est a cote d'une zone libre et du coup il faut fusionner les 2 zones libres en une.
-	//cas où la zone précédente est libre et la suivante est occupée	
-	if(var_zone_precedente.zl != NULL && var_zone_suivante.zo != NULL){
-	//nouvelle_zl->next = var_zone_precedente.zl->next;
-	//var_zone_precedente.zl->next = nouvelle_zl;
-	//var_zone_precedente.zl->size += nouvelle_zl->size;
-
-	while(liste_zl != var_zone_precedente.zl){
-	liste_zl = liste_zl->next;
-	}
-	nouvelle_zl->next = liste_zl->next;
-	liste_zl->next = nouvelle_zl;
-	liste_zl->size += nouvelle_zl->size;
-
-	get_header()->liste_zone_libre = tete;				// ???
-	return;
-	}
-
-	//cas où la zone précédente est occupée et la suivante est libre
-	if(var_zone_precedente.zo != NULL && var_zone_suivante.zl != NULL){
-
-	//struct zones_libres* zl_prec = zone_precedente(var_zone_suivante.zl);
-	//nouvelle_zl->next = zl_prec->next;
-	//nouvelle_zl->size += var_zone_suivante.zl->size;
-	//zl_prec->next = nouvelle_zl;
-
-	while(liste_zl->next != var_zone_suivante.zl){
-	liste_zl = liste_zl->next;
-	}
-	nouvelle_zl->next = liste_zl->next;
-	liste_zl->next = nouvelle_zl;
-	liste_zl->size += var_zone_suivante.zl->size;
-
-	get_header()->liste_zone_libre = tete;				// ???
-	return;
-}
-
-//cas où la zone précédente et la zone suivante sont libres --> fusionner les 3 zones en une
-if(var_zone_precedente.zl != NULL && var_zone_suivante.zl != NULL){
-	var_zone_precedente.zl->size = var_zone_precedente.zl->size + nouvelle_zl->size + var_zone_suivante.zl->size;
-	nouvelle_zl->next = var_zone_precedente.zl->next;
-	var_zone_precedente.zl->next = nouvelle_zl;
-
-	//get_header()->liste_zone_libre = ????
-	return;
-}
-
-}
-
-*/
-
-void fusionner_zl(){
-	struct zones_libres* a_fusionner = get_header()->liste_zone_libre;
-	void* next_zone = (void*) a_fusionner;
-	while ((!a_fusionner) &&  (a_fusionner->next != NULL)){
-		next_zone = (void *)((char*) next_zone + a_fusionner->size);
-		while((!a_fusionner->next) && ((void*) a_fusionner->next) == (next_zone)){
-			next_zone = (void *)((char*) next_zone + a_fusionner->next->size);
-			a_fusionner->size += a_fusionner->next->size;
-			a_fusionner->next = a_fusionner->next->next;
+	void fusionner_zl(){
+		struct zones_libres* a_fusionner = get_header()->liste_zone_libre;
+		void* next_zone = (void*) a_fusionner;
+		while ((!a_fusionner) &&  (a_fusionner->next != NULL)){
+			next_zone = (void *)((char*) next_zone + a_fusionner->size);
+			while((!a_fusionner->next) && ((void*) a_fusionner->next) == (next_zone)){
+				next_zone = (void *)((char*) next_zone + a_fusionner->next->size);
+				a_fusionner->size += a_fusionner->next->size;
+				a_fusionner->next = a_fusionner->next->next;
+			}
+			a_fusionner = a_fusionner->next;
 		}
-		a_fusionner = a_fusionner->next;
-	}}
-
-void mem_free(void *mem){
-
-	size_t taille = *((char*)mem - sizeof(size_t));
-	get_header()->memory_size += taille;
-	struct zones_libres* liste_zl = get_header()->liste_zone_libre;
-
-	struct zone_occupee* zo = memory_addr + sizeof(struct allocator_header) + sizeof(size_t);
-	zo->size = *((char*)zo - sizeof(size_t));
-
-	// cas où la liste est NULL
-	if(liste_zl == NULL){
-		get_header()->liste_zone_libre = (struct zones_libres*)mem;
-		get_header()->liste_zone_libre->size = taille;
-		get_header()->liste_zone_libre->next = NULL;
-		return;
-	}
-	
-	// cas où la zone mémoire est à coté du header
-	if(zo == mem){
-		struct zones_libres* l_zl = get_header()->liste_zone_libre;
-		get_header()->liste_zone_libre = (struct zones_libres*)mem;
-		get_header()->liste_zone_libre->size = taille;
-		get_header()->liste_zone_libre->next = l_zl;
-		return;
 	}
 
-	// parcours des zones mémoires grâce à leur taille jusqu'à la zone précédente
-	while(zo + zo->size != mem){
-		zo += zo->size;
+	void mem_free(void *mem){
+
+		size_t taille = *((char*)mem - sizeof(size_t));
+		get_header()->memory_size += taille;
+		struct zones_libres* liste_zl = get_header()->liste_zone_libre;
+
+		struct zone_occupee* zo = memory_addr + sizeof(struct allocator_header) + sizeof(size_t);
 		zo->size = *((char*)zo - sizeof(size_t));
-	}
 
-	// on cherche la zone libre précédente
-	while(liste_zl != NULL){
-		if(liste_zl == (struct zones_libres*)zo){
-			struct zones_libres* zl_suiv = liste_zl->next;
-			liste_zl->next = (struct zones_libres*)mem;
-			liste_zl->next->next = zl_suiv;
-
+		// cas où la liste est NULL
+		if(liste_zl == NULL){
+			get_header()->liste_zone_libre = (struct zones_libres*)mem;
+			get_header()->liste_zone_libre->size = taille;
+			get_header()->liste_zone_libre->next = NULL;
+			return;
 		}
-		liste_zl = liste_zl->next;
+
+		// cas où la zone mémoire est à coté du header
+		if(zo == mem){
+			struct zones_libres* l_zl = get_header()->liste_zone_libre;
+			get_header()->liste_zone_libre = (struct zones_libres*)mem;
+			get_header()->liste_zone_libre->size = taille;
+			get_header()->liste_zone_libre->next = l_zl;
+			return;
+		}
+
+		// parcours des zones mémoires grâce à leur taille jusqu'à la zone précédente
+		while(zo + zo->size != mem){
+			zo += zo->size;
+			zo->size = *((char*)zo - sizeof(size_t));
+		}
+
+		// on cherche la zone libre précédente
+		while(liste_zl != NULL){
+			if(liste_zl->next >= (struct zones_libres*)zo){
+				struct zones_libres* zl_suiv = liste_zl->next;
+				liste_zl->next = (struct zones_libres*)mem;
+				liste_zl->next->next = zl_suiv;
+			}
+			liste_zl = liste_zl->next;
+		}
+
+		fusionner_zl();
+		return;
+
 	}
 
-	//fusionner_zl();
-	return;
-}
-}
+	struct zones_libres *mem_fit_first(struct zones_libres *list, size_t size) {
+		if(list == NULL){
+			return NULL;
+		}
+		if(list->size >= size){
+			struct zones_libres* zl = list;
+			return zl;
+		}
+		struct zones_libres* parcours_zones_libres = list;
 
-struct zones_libres *mem_fit_first(struct zones_libres *list, size_t size) {
-	if(list == NULL){
+		while(parcours_zones_libres->next != NULL){
+			if(parcours_zones_libres->next->size >= size){
+				return parcours_zones_libres->next;
+			}
+			parcours_zones_libres = parcours_zones_libres->next;
+		}
 		return NULL;
 	}
-	if(list->size >= size){
-		struct zones_libres* zl = list;
-		list = list->next;
-		return zl;
+
+	/* Fonction à faire dans un second temps
+	 * - utilisée par realloc() dans malloc_stub.c
+	 * - nécessaire pour remplacer l'allocateur de la libc
+	 * - donc nécessaire pour 'make test_ls'
+	 * Lire malloc_stub.c pour comprendre son utilisation
+	 * (ou en discuter avec l'enseignant)
+	 */
+	size_t mem_get_size(void *zone) {
+		/* zone est une adresse qui a été retournée par mem_alloc() */
+
+		/* la valeur retournée doit être la taille maximale que
+		 * l'utilisateur peut utiliser dans cette zone */
+		return 0;
 	}
-	struct zones_libres* parcours_zones_libres = list;
 
-	while(parcours_zones_libres->next != NULL){
-		if(parcours_zones_libres->next->size >= size){
-			return parcours_zones_libres->next;
-		}
-		parcours_zones_libres = parcours_zones_libres->next;
+	/* Fonctions facultatives
+	 * autres stratégies d'allocation
+	 */
+	struct zones_libres *mem_fit_best(struct zones_libres *list, size_t size) {
+		return NULL;
 	}
-	return NULL;
-}
 
-/* Fonction à faire dans un second temps
- * - utilisée par realloc() dans malloc_stub.c
- * - nécessaire pour remplacer l'allocateur de la libc
- * - donc nécessaire pour 'make test_ls'
- * Lire malloc_stub.c pour comprendre son utilisation
- * (ou en discuter avec l'enseignant)
- */
-size_t mem_get_size(void *zone) {
-	/* zone est une adresse qui a été retournée par mem_alloc() */
-
-	/* la valeur retournée doit être la taille maximale que
-	 * l'utilisateur peut utiliser dans cette zone */
-	return 0;
-}
-
-/* Fonctions facultatives
- * autres stratégies d'allocation
- */
-struct zones_libres *mem_fit_best(struct zones_libres *list, size_t size) {
-	return NULL;
-}
-
-struct zones_libres *mem_fit_worst(struct zones_libres *list, size_t size) {
-	return NULL;
-}
+	struct zones_libres *mem_fit_worst(struct zones_libres *list, size_t size) {
+		return NULL;
+	}
