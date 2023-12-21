@@ -134,12 +134,15 @@ struct zones_libres* zone_precedente(struct zones_libres* zl){
 	if(libre == NULL){
 		return NULL;
 	}
+	if(libre == zl){ return libre;}
+
 	while(libre->next != NULL && libre->next != zl){
 		libre = libre->next;
 	}
 	if(libre == zl){
 		return libre;
 	}
+	printf("libre : %p\nlibre->next: %p\n",libre, libre->next);
 	return NULL;
 }
 
@@ -234,7 +237,7 @@ void mem_show(void (*print)(void *, size_t, int)) {
 		}	
 		zone_actuelle = zone_actuelle + taille_zone_actuelle;
 		taille_restante = taille_restante - taille_zone_actuelle;
-		if(prochaine_zone_libre == NULL || prochaine_zone_libre->next == NULL){
+		if(prochaine_zone_libre == NULL /*|| prochaine_zone_libre->next == NULL*/){
 			reste_zone_libre = 0;
 		}
 	}
@@ -251,24 +254,26 @@ void *mem_alloc(size_t taille) {
 	struct zones_libres* case_a_remplir = get_header()->fit(get_header()->liste_zone_libre, taille_pour_fct);
 	if(case_a_remplir == NULL){ return NULL;}
 
+	struct zones_libres* pred_case_a_remplir = zone_precedente(case_a_remplir);
+	if (pred_case_a_remplir == NULL){ printf("oups\n");}
+	//struct zones_libres* pred_case_a_remplir = get_header()->liste_zone_libre;
 	if(taille_pour_fct + sizeof(struct zones_libres) <= case_a_remplir->size){
-		struct zones_libres* pred_case_a_remplir = zone_precedente(case_a_remplir);
+		
 		if (pred_case_a_remplir == NULL){ printf("oups\n");}
 		char* debut_zl_a_initialiser = (char*)case_a_remplir + taille_pour_fct;
-		/*if (pred_case_a_remplir == case_a_remplir){ 
+		pred_case_a_remplir->next = (struct zones_libres*)debut_zl_a_initialiser;
+		pred_case_a_remplir->next->size = case_a_remplir->size - taille_pour_fct;
+		if (pred_case_a_remplir == case_a_remplir){
 			get_header()->liste_zone_libre = (struct zones_libres*)debut_zl_a_initialiser;
-			get_header()->liste_zone_libre->size = case_a_remplir->size - taille_pour_fct;
-			case_a_remplir->size = taille_pour_fct;
-		}else {*/
-			pred_case_a_remplir->next = (struct zones_libres*)debut_zl_a_initialiser;
-			pred_case_a_remplir->next->size = case_a_remplir->size - taille_pour_fct;
-			pred_case_a_remplir->next->next = case_a_remplir->next;
-		//}
-			if (pred_case_a_remplir == case_a_remplir){
-				get_header()->liste_zone_libre = (struct zones_libres*)debut_zl_a_initialiser;
 		}
 	} else {
 		taille_pour_fct += case_a_remplir->size - taille_pour_fct;
+		if(pred_case_a_remplir == get_header()->liste_zone_libre){
+			get_header()->liste_zone_libre = get_header()->liste_zone_libre->next;
+		} else {
+			pred_case_a_remplir->next = case_a_remplir->next;
+		}
+		
 	}
 
 	case_a_remplir->size = taille_pour_fct;
@@ -384,7 +389,7 @@ void fusionner_zl(){
 
 struct zones_libres* retrouve_prec (void* mem){
 	struct zones_libres* rv = get_header()->liste_zone_libre;
-	if(rv == NULL){ return rv;}
+	if(rv == NULL){ return NULL;}
 	void* addr_fin_zone = (char*)rv + rv->size;
 	while((rv != NULL) && (addr_fin_zone <= mem)){
 		if(addr_fin_zone == mem){ return rv;}
@@ -396,7 +401,7 @@ struct zones_libres* retrouve_prec (void* mem){
 
 
 void mem_free(void *mem) {
-	struct zones_libres* zone_av = retrouve_prec(mem);
+	struct zones_libres* zone_av = retrouve_prec(mem - sizeof(size_t));
 	if((void*)zone_av > mem){
 		get_header()->liste_zone_libre = (struct zones_libres*)((char*)mem - sizeof(size_t)) ;
 		//get_header()->liste_zone_libre->size = *((int*)mem);
@@ -404,9 +409,10 @@ void mem_free(void *mem) {
 		fusionner_zl();
 		return;
 	}
+	struct zone_occupee* taille_mem = (struct zone_occupee*)((char*)mem - sizeof(size_t));
 	struct zones_libres* zone_ap = zone_av->next;
-	zone_av->next = (struct zones_libres*) mem;
-	zone_av->size = *((int*)mem) + sizeof (size_t);
+	zone_av->next = (struct zones_libres*)((char*)mem - sizeof(size_t));
+	zone_av->next->size = taille_mem->size;//*((int*)mem) + sizeof (size_t);
 	zone_av->next->next = zone_ap;
 	fusionner_zl();
 }
