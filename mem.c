@@ -1,5 +1,6 @@
 /* On inclut l'interface publique */
 #include "mem.h"
+#include "functions.h"
 /* ainsi que les détails d'implémentation locaux */
 #include "common.h"
 
@@ -18,12 +19,12 @@
 #define ALIGNMENT 16
 #endif
 
-struct zones_libres {
-	// Taille, entête compris
-	size_t size;
-	struct zones_libres *next;
-	/* ... */
-};
+// struct zones_libres {
+// 	// Taille, entête compris
+// 	size_t size;
+// 	struct zones_libres *next;
+// 	/* ... */
+// };
 
 struct zone_occupee{
 	size_t size;
@@ -41,12 +42,12 @@ struct zone{
 
    Elle peut bien évidemment être complétée
    */
-struct allocator_header {
-	size_t memory_size;
-	mem_fit_function_t *fit;
-	struct zones_libres *liste_zone_libre;
-	int taille_max_zone_libre;
-};
+// struct allocator_header {
+// 	size_t memory_size;
+// 	mem_fit_function_t *fit;
+// 	struct zones_libres *liste_zone_libre;
+// 	int taille_max_zone_libre;
+// };
 
 
 /* La seule variable globale autorisée
@@ -96,36 +97,36 @@ static inline int type_zone(void* zone){
 }
 
 // Renvoie la zone libre ou la zone occupée correspondant
-struct zone type_de_zone(void* zone){
-	struct zones_libres* zl = get_header()->liste_zone_libre;
-	struct zone z;
-	z.zo = NULL;
-	z.zl = NULL;
-
-	if((void*)zl > zone){
-		z.zo = memory_addr + sizeof(struct allocator_header);
-		return z;	
-	}
-
-	while(zl != NULL){
-		//if((void*)zl == zone){
-		if(zl == (struct zones_libres*)zone){
-			z.zl = zl;
-			return z;
-		}
-		zl = zl->next;
-	}
-
-	struct zone_occupee* zo = memory_addr + sizeof(struct allocator_header);
-	while((void*)zo != NULL){
-		if((void*)zo == zone){
-			z.zo = zo;
-			return z;
-		}
-		zo = zo+zo->size;
-	}
-	return z;	
-}
+//struct zone type_de_zone(void* zone){
+//	struct zones_libres* zl = get_header()->liste_zone_libre;
+//	struct zone z;
+//	z.zo = NULL;
+//	z.zl = NULL;
+//
+//	if((void*)zl > zone){
+//		z.zo = memory_addr + sizeof(struct allocator_header);
+//		return z;	
+//	}
+//
+//	while(zl != NULL){
+//		//if((void*)zl == zone){
+//		if(zl == (struct zones_libres*)zone){
+//			z.zl = zl;
+//			return z;
+//		}
+//		zl = zl->next;
+//	}
+//
+//	struct zone_occupee* zo = memory_addr + sizeof(struct allocator_header);
+//	while((void*)zo != NULL){
+//		if((void*)zo == zone){
+//			z.zo = zo;
+//			return z;
+//		}
+//		zo = zo+zo->size;
+//	}
+//	return z;	
+//}
 
 // Renvoie la zone mémoire libre précédente
 struct zones_libres* zone_precedente(struct zones_libres* zl){
@@ -143,19 +144,19 @@ struct zones_libres* zone_precedente(struct zones_libres* zl){
 }
 
 // Renvoie la zone mémoire précédente
-void* zone_prec(void* zone){
-	struct zone_occupee* zo = memory_addr + sizeof(struct allocator_header);
-	if((void*)zo == zone){		// la zone mémoire précédente est le bloc de métadonnées
-		return NULL;
-	}
-	while((void*)zo+zo->size != zone && (void*)zo+zo->size != NULL){
-		zo = zo+zo->size;
-	}
-	if((void*)zo+zo->size == zone){
-		return (void*)zo;
-	}
-	return NULL;
-}
+//void* zone_prec(void* zone){
+//	struct zone_occupee* zo = memory_addr + sizeof(struct allocator_header);
+//	if((void*)zo == zone){		// la zone mémoire précédente est le bloc de métadonnées
+//		return NULL;
+//	}
+//	while((void*)zo+zo->size != zone && (void*)zo+zo->size != NULL){
+//		zo = zo+zo->size;
+//	}
+//	if((void*)zo+zo->size == zone){
+//		return (void*)zo;
+//	}
+//	return NULL;
+//}
 	/*
 	// Renvoie l'adresse du début de la zone mémoire suivante
 	void* zone_suivante(void* zone){
@@ -187,11 +188,11 @@ void* zone_prec(void* zone){
 	}
 	*/
 	// Renvoie l'adresse du début de la zone mémoire suivante
-void* zone_suivante(void* zone){
-	struct zone_occupee* zo = zone;
-	void* zone_suivante = (void*)zo + zo->size;
-	return zone_suivante;
-}
+//void* zone_suivante(void* zone){
+//	struct zone_occupee* zo = zone;
+//	void* zone_suivante = (void*)zo + zo->size;
+//	return zone_suivante;
+//}
 
 void mem_init(void *mem, size_t taille) {
 	memory_addr = mem;
