@@ -138,7 +138,7 @@ struct zones_libres* zone_precedente(struct zones_libres* zl){
 	while(libre->next != NULL && libre->next != zl){
 		libre = libre->next;
 	}
-	if(libre == zl){
+	if(libre->next == zl){
 		return libre;
 	}
 	printf("libre : %p\nlibre->next: %p\n",libre, libre->next);
@@ -262,6 +262,7 @@ void *mem_alloc(size_t taille) {
 		char* debut_zl_a_initialiser = (char*)case_a_remplir + taille_pour_fct;
 		pred_case_a_remplir->next = (struct zones_libres*)debut_zl_a_initialiser;
 		pred_case_a_remplir->next->size = case_a_remplir->size - taille_pour_fct;
+		pred_case_a_remplir->next->next = case_a_remplir->next; //a voir si c'est ca 
 		if (pred_case_a_remplir == case_a_remplir){
 			get_header()->liste_zone_libre = (struct zones_libres*)debut_zl_a_initialiser;
 		}
