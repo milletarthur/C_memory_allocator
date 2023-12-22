@@ -251,6 +251,7 @@ void *mem_alloc(size_t taille) {
 	size_t taille_pour_fct = taille + sizeof(size_t);	 // allignement
 	taille_pour_fct = aligne_taille(taille_pour_fct, 8);
 	struct zones_libres* case_a_remplir = get_header()->fit(get_header()->liste_zone_libre, taille_pour_fct);
+	struct zones_libres* suiv_case_a_remplir = case_a_remplir->next;
 	if(case_a_remplir == NULL){ return NULL;}
 
 	struct zones_libres* pred_case_a_remplir = zone_precedente(case_a_remplir);
@@ -269,6 +270,9 @@ void *mem_alloc(size_t taille) {
 		} /*else {
 			pred_case_a_remplir->next->next = case_a_remplir->next; //a voir si c'est ca 
 		}*/
+		if(case_a_remplir->next != NULL){
+			((struct zones_libres*)debut_zl_a_initialiser)->next = suiv_case_a_remplir;
+		}
 	} else {
 		taille_pour_fct += case_a_remplir->size - taille_pour_fct;
 		if(pred_case_a_remplir == get_header()->liste_zone_libre){
