@@ -400,8 +400,8 @@ struct zones_libres* retrouve_prec (void* mem){
 	void* addr_fin_zone = (char*)rv + rv->size;
 	while((rv != NULL) && (addr_fin_zone <= mem)){
 		if(addr_fin_zone == mem){ return rv;}
-		rv = rv->next;
 		addr_fin_zone = (char*)rv - rv->size;
+		rv = rv->next;
 	}
 	return zone_precedente(rv);
 }
