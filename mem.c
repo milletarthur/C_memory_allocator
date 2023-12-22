@@ -325,7 +325,7 @@ void test1(){
 void test2(){
 	// test de l'allocation quand la mémoire est pleine
 	printf("Test lorsqu'on essaie d'allouer une case mémoire lorsque la mémoire est pleine.\n\n");
-	p1 = mem_alloc(get_memory_size()-sizeof(struct allocator_header)-sizeof(size_t));
+	p1 = mem_alloc(get_memory_size()-sizeof(struct allocator_header)-sizeof(size_t)-1);
 	for(int i=10; i<=100; i+=10){
 		p2 = mem_alloc(i);
 		printf("Tentative d'allocation d'une case mémoire de taille %d.\n",i);
@@ -403,8 +403,11 @@ void test7(){
 	int nb_zones_libres = 1;
 	struct zones_libres* zl;
 	p1 = mem_alloc(10);
+	printf("Mémoire allouée en %p\n",p1);
 	p2 = mem_alloc(10);
+	printf("Mémoire allouée en %p\n",p2);
 	p3 = mem_alloc(10);
+	printf("Mémoire allouée en %p\n\n",p3);
 	int c = 0;
 	zl = get_header()->liste_zone_libre;
 	// on vérifie qu'il y a bien 1 seule zone libre dans la mémoire
@@ -415,6 +418,7 @@ void test7(){
 	printf("Pour le moment on a alloué 3 zones occupées à la suite, on a donc juste %d zone libre\n",c);
 	assert(nb_zones_libres == c);
 	// on a libéré la première zone occupée, donc on a maintenant 2 zones libres
+	printf("On libère en %p\n\n",p1);
 	mem_free(p1);
 	nb_zones_libres = 2;
 	zl = get_header()->liste_zone_libre;
@@ -426,6 +430,7 @@ void test7(){
 	printf("On a libéré la première zone occupée, on a maintenant %d zones libres\n", c);
 	assert(nb_zones_libres == c);
 	// on a libéré la deuxième zone occupée, donc avec la fusion, on a toujours 2 zones libres
+	printf("On libère en %p\n\n",p2);
 	mem_free(p2);
 	zl = get_header()->liste_zone_libre;
 	c=0;
@@ -436,14 +441,16 @@ void test7(){
 	printf("On a libéré la seconde zone occupée qui a fusionnée avec la première, donc a %d zones libres\n",c);
 	assert(nb_zones_libres == c);
 	// on a libéré la dernière zone occupée, donc comme il y avait une zone libre avant et après, on fusionne tout, on a alors juste 1 zone libre
+	printf("On libère en %p\n\n",p3);
 	mem_free(p3);
 	nb_zones_libres = 1;
 	c=0;
+	zl = get_header()->liste_zone_libre;
 	while(zl != NULL){
 		c++;
 		zl = zl->next;
 	}
-	printf("On a libéré la dernière zone occupée, donc on a tout fusionée, on a plus que %d zone libre\n", c);
+	printf("On a libéré la dernière zone occupée, donc on a tout fusioné, on a plus que %d zone libre\n", c);
 	assert(nb_zones_libres == c);
 	printf("\nTest OK\n");
 }
