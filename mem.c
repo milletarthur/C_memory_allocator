@@ -15,7 +15,7 @@
 #ifdef __BIGGEST_ALIGNMENT__
 #define ALIGNMENT __BIGGEST_ALIGNMENT__
 #else
-#define ALIGNMENT 8
+#define ALIGNMENT 16
 #endif
 
 struct zones_libres {
@@ -213,6 +213,10 @@ struct zones_libres* retrouve_prec (void* mem){
 
 void mem_free(void *mem) {
 	if(mem == NULL){return;}
+	if(mem < get_system_memory_addr()+sizeof(struct allocator_header)){
+		printf("Tentative de libérer le header !\n");
+		return;
+	}
 	if(get_header()->liste_zone_libre == NULL){
 		get_header()->liste_zone_libre = (struct zones_libres*)((char*)mem - sizeof(size_t));
 		get_header()->liste_zone_libre->size = ((struct zone_occupee*)((char*)mem - sizeof(size_t)))->size;
@@ -264,18 +268,50 @@ size_t mem_get_size(void *zone) {
 
 	/* la valeur retournée doit être la taille maximale que
 	 * l'utilisateur peut utiliser dans cette zone */
-	return 0;
+	// struct zone_occupee* zo = ((struct zone_occupee*)((char*)zone));
+	// size_t taille = zo->size;
+	return ((struct zone_occupee*)((char*)zone - sizeof(size_t)))->size - sizeof(size_t);
 }
 
 /* Fonctions facultatives
  * autres stratégies d'allocation
  */
 struct zones_libres *mem_fit_best(struct zones_libres *list, size_t size) {
-	return NULL;
+	if(list == NULL){
+		return NULL;
+	}
+	if(list->next == NULL){
+		return list;
+	}
+	struct zones_libres* plus_petite_zone = list;
+	while(list != NULL){
+		if(list->size >= size){
+			if(list->size < plus_petite_zone->size){
+				plus_petite_zone = list;
+			}
+		}
+		list = list->next;
+	}
+	return plus_petite_zone;
 }
 
 struct zones_libres *mem_fit_worst(struct zones_libres *list, size_t size) {
-	return NULL;
+	if(list == NULL){
+		return NULL;
+	}
+	if(list->next == NULL){
+		return list;
+	}
+	struct zones_libres* plus_grande_zone = list;
+	while(list != NULL){
+		if(list->size >= size){
+			if(list->size > plus_grande_zone->size){
+				plus_grande_zone = list;
+			}
+		}
+		list = list->next;
+	}
+	return plus_grande_zone;
 }
 
 
@@ -452,5 +488,35 @@ void test7(){
 	}
 	printf("On a libéré la dernière zone occupée, donc on a tout fusioné, on a plus que %d zone libre\n", c);
 	assert(nb_zones_libres == c);
+	printf("\nTest OK\n");
+}
+
+void test8(){
+	// Test pour vérifier qu'on ne puisse pas utiliser mem_free sur le début de la zone mémoire où il y a notre header
+	printf("Test pour vérifier qu'on ne puisse pas utiliser mem_free sur le début de la zone mémoire où il y a notre header\n");
+	size_t memory_size = get_header()->liste_zone_libre->size;
+	void* mem = get_system_memory_addr()+sizeof(struct allocator_header);
+	for(void* i=get_header(); i<mem; i++){
+		mem_free(i);
+		printf("Adresse : %p\n\n",i);
+		assert(memory_size == get_header()->liste_zone_libre->size);
+		memory_size = get_header()->liste_zone_libre->size;
+		// get_header()->liste_zone_libre = get_header()->liste_zone_libre->next;
+	}
+	printf("\nTest OK\n");
+}
+
+void test9(){
+	// Test de la fonction mem_get_size
+	printf("Test de la fonction mem_get_size\n");
+	for(int i=10; i<=100; i+=10){
+		p1 = mem_alloc(i);
+		printf("Mémoire allouée de taille %d en %p\n",i,p1);
+		size_t taille = mem_get_size(p1);
+		printf("taille de p1 : %ld\n\n", taille);
+		taille=aligne_taille(taille, ALIGNMENT);
+		assert(aligne_taille(i+sizeof(size_t),ALIGNMENT) == taille);
+		mem_free(p1);
+	}
 	printf("\nTest OK\n");
 }

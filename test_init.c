@@ -9,7 +9,7 @@
 void aide() {
     fprintf(stderr, "Aide :\n");
     fprintf(stderr, "Saisir l'une des commandes suivantes\n");
-	fprintf(stderr, "0...7     :   effectuer le test\n");
+	fprintf(stderr, "0...9     :   effectuer le test\n");
 	fprintf(stderr, "h         :   afficher cette aide\n");
     fprintf(stderr, "q         :   quitter ce programme\n");
     fprintf(stderr, "\n");
@@ -66,6 +66,12 @@ int main() {
 		case '7':
             test7();
             break;
+        case '8':
+            test8();
+            break;  
+        case '9':
+            test9();
+            break;  
 		case 'h':
             aide();
             break;
