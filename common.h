@@ -23,4 +23,13 @@ void *alloc_max(size_t estimate);
  */
 size_t mem_get_size(void *zone);
 
+void test0();
+void test1();
+void test2();
+void test3();
+void test4();
+void test5();
+void test6();
+void test7();
+
 #endif
