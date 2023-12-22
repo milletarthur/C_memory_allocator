@@ -277,3 +277,180 @@ struct zones_libres *mem_fit_best(struct zones_libres *list, size_t size) {
 struct zones_libres *mem_fit_worst(struct zones_libres *list, size_t size) {
 	return NULL;
 }
+
+
+/*---------------------Partie TEST----------------------*/
+
+void* p1;
+void* p2;
+void* p3;
+size_t taille;
+
+// tests de la fonction d'alignement sur ALIGNMENT bits
+void test0(){
+	printf("Test de la fonction d'alignement\n\n");
+	for(int taille=1; taille<100; taille+=5){
+		assert(aligne_taille(taille, ALIGNMENT) == taille + (ALIGNMENT - (taille % ALIGNMENT)) % ALIGNMENT);
+		printf("taille : %d\ntaille alignée sur %d : %ld\n",ALIGNMENT,taille,aligne_taille(taille, ALIGNMENT));
+	}
+	printf("\nTest OK\n");
+}
+
+void test1(){
+	// tests de la mise à jour de la taille de la mémoire restante
+	printf("Test mise à jour de la taille de la mémoire restante après allocation\n\n");
+	get_header()->memory_size -= sizeof(struct allocator_header);
+	//void* memory_addr = get_memory_adr();
+	size_t memory_size = get_header()->memory_size;
+	size_t prec_mem_size = get_header()->memory_size;
+	//mem_init(memory_addr, memory_size);
+	printf("taille restante de la mémoire : %ld\n\n", get_header()->liste_zone_libre->size);
+	p1 = mem_alloc(12);
+	printf("Mémoire allouée en %p de taille 12\n",p1);
+	memory_size -= aligne_taille(12+sizeof(size_t), ALIGNMENT);
+	assert(get_header()->liste_zone_libre->size == memory_size);
+	printf("taille restante de la mémoire : %ld = %ld - %ld\n\n", get_header()->liste_zone_libre->size, prec_mem_size, aligne_taille(12+sizeof(size_t), ALIGNMENT));
+	p2 = mem_alloc(30);
+	prec_mem_size = memory_size;
+	printf("Mémoire allouée en %p\n",p2);
+	memory_size -= aligne_taille(30+sizeof(size_t), ALIGNMENT);
+	assert(get_header()->liste_zone_libre->size == memory_size);
+	printf("taille restante de la mémoire : %ld = %ld - %ld\n", get_header()->liste_zone_libre->size, prec_mem_size, aligne_taille(30+sizeof(size_t), ALIGNMENT));
+	// ....
+	mem_free(p1);
+	mem_free(p2);
+	printf("\nTest OK\n");
+}
+
+void test2(){
+	// test de l'allocation quand la mémoire est pleine
+	printf("Test lorsqu'on essaie d'allouer une case mémoire lorsque la mémoire est pleine.\n\n");
+	p1 = mem_alloc(get_memory_size()-sizeof(struct allocator_header)-sizeof(size_t)-1);
+	for(int i=10; i<=100; i+=10){
+		p2 = mem_alloc(i);
+		printf("Tentative d'allocation d'une case mémoire de taille %d.\n",i);
+		assert(p2 == NULL);
+		printf("Echec de l'allocation.\n");
+	}
+	mem_free(p1);
+	printf("\nTest OK\n");
+}
+
+void test3(){
+	// test de la taille de la zone mémoire libérée
+	printf("Test de vérification de la taille de la zone libre après la libération de la seule zone occupée.\n");
+	p1 = mem_alloc(get_memory_size());
+	size_t memory_size = get_memory_size();
+	mem_free(p1);
+	assert(get_memory_size() == memory_size);
+	printf("\nTest OK\n");
+}
+
+void test4(){
+	// test de mem_free(NULL)
+	printf("Test de mem_free(NULL).\n");
+	size_t memory_size = get_header()->liste_zone_libre->size;
+	mem_free(NULL);
+	assert(memory_size == get_header()->liste_zone_libre->size);
+	printf("\nTest OK\n");
+}
+
+void test5(){
+	// test du changement de la tête de la liste chaînée des zones libres
+	printf("Test changement de la tête de la liste chaînée des zones libres.\n\n");
+	struct zones_libres* zl;
+	zl = get_header()->liste_zone_libre;
+	printf("adresse de la tête : %p\n",zl);
+	p1 = mem_alloc(10);
+	p2 = mem_alloc(10);
+	mem_free(p1);
+	printf("adresse de la nouvelle tête : %p\n", get_header()->liste_zone_libre);
+	assert(zl == get_header()->liste_zone_libre);
+	mem_free(p2);
+	printf("\nTest OK\n");
+}
+
+void test6(){
+	// test de libérer une zone occupée à côté d'une autre zone libre au niveau de la taille de la zone
+	printf("Test de la mise à jour de la taille d'une zone libre lorsqu'on libère une zone occupée à côté.\n\n");
+	struct zones_libres* zl;
+	zl = get_header()->liste_zone_libre;
+	p1 = mem_alloc(10);
+	printf("Mémoire allouée en %p\n",p1);
+	p2 = mem_alloc(100);
+	printf("Mémoire allouée en %p\n",p2);
+	p3 = mem_alloc(50);
+	printf("Mémoire allouée en %p\n\n",p3);
+	printf("taille de la première zone occupée: %ld\n",aligne_taille(10,ALIGNMENT));
+	printf("taille de la seconde zone occupée: %ld\n\n", aligne_taille(100,ALIGNMENT));
+	printf("On libère en %p\n",p1);
+	mem_free(p1);
+	taille = aligne_taille(10,ALIGNMENT)+aligne_taille(100,ALIGNMENT)+2*sizeof(size_t);
+	printf("On libère en %p\n\n",p2);
+	mem_free(p2);
+	zl = get_header()->liste_zone_libre;
+	printf("taille de la première zone : %ld\n",zl->size);
+	printf("taille de la seconde zone : %ld\n\n", *(&(zl->size)+zl->size));
+	printf("taille de la nouvelle zone fusionnée : %ld = %ld + %ld + 2*sizeof(size_t)\n", taille, aligne_taille(10,ALIGNMENT), aligne_taille(100,ALIGNMENT));
+	assert(taille == zl->size);
+	mem_free(p3);
+	printf("\nTest OK\n");
+}
+
+void test7(){
+	// même test que précédemment mais on vérifie le nombre de zones libres
+	printf("Test de la fusion de zones libres après 3 allocations successives.\n\n");
+	int nb_zones_libres = 1;
+	struct zones_libres* zl;
+	p1 = mem_alloc(10);
+	printf("Mémoire allouée en %p\n",p1);
+	p2 = mem_alloc(10);
+	printf("Mémoire allouée en %p\n",p2);
+	p3 = mem_alloc(10);
+	printf("Mémoire allouée en %p\n\n",p3);
+	int c = 0;
+	zl = get_header()->liste_zone_libre;
+	// on vérifie qu'il y a bien 1 seule zone libre dans la mémoire
+	while(zl != NULL){
+		c++;
+		zl = zl->next;
+	}
+	printf("Pour le moment on a alloué 3 zones occupées à la suite, on a donc juste %d zone libre\n",c);
+	assert(nb_zones_libres == c);
+	// on a libéré la première zone occupée, donc on a maintenant 2 zones libres
+	printf("On libère en %p\n\n",p1);
+	mem_free(p1);
+	nb_zones_libres = 2;
+	zl = get_header()->liste_zone_libre;
+	c=0;
+	while(zl != NULL){
+		c++;
+		zl = zl->next;
+	}
+	printf("On a libéré la première zone occupée, on a maintenant %d zones libres\n", c);
+	assert(nb_zones_libres == c);
+	// on a libéré la deuxième zone occupée, donc avec la fusion, on a toujours 2 zones libres
+	printf("On libère en %p\n\n",p2);
+	mem_free(p2);
+	zl = get_header()->liste_zone_libre;
+	c=0;
+	while(zl != NULL){
+		c++;
+		zl = zl->next;
+	}
+	printf("On a libéré la seconde zone occupée qui a fusionnée avec la première, donc a %d zones libres\n",c);
+	assert(nb_zones_libres == c);
+	// on a libéré la dernière zone occupée, donc comme il y avait une zone libre avant et après, on fusionne tout, on a alors juste 1 zone libre
+	printf("On libère en %p\n\n",p3);
+	mem_free(p3);
+	nb_zones_libres = 1;
+	c=0;
+	zl = get_header()->liste_zone_libre;
+	while(zl != NULL){
+		c++;
+		zl = zl->next;
+	}
+	printf("On a libéré la dernière zone occupée, donc on a tout fusioné, on a plus que %d zone libre\n", c);
+	assert(nb_zones_libres == c);
+	printf("\nTest OK\n");
+}
