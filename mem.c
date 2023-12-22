@@ -15,7 +15,7 @@
 #ifdef __BIGGEST_ALIGNMENT__
 #define ALIGNMENT __BIGGEST_ALIGNMENT__
 #else
-#define ALIGNMENT 16
+#define ALIGNMENT 8
 #endif
 
 struct zones_libres {
@@ -249,7 +249,7 @@ void mem_fit(mem_fit_function_t *f) {
 void *mem_alloc(size_t taille) {
 
 	size_t taille_pour_fct = taille + sizeof(size_t);	 // allignement
-	taille_pour_fct = aligne_taille(taille_pour_fct, 8);
+	taille_pour_fct = aligne_taille(taille_pour_fct, ALIGNMENT);
 	struct zones_libres* case_a_remplir = get_header()->fit(get_header()->liste_zone_libre, taille_pour_fct);
 	struct zones_libres* suiv_case_a_remplir = case_a_remplir->next;
 	if(case_a_remplir == NULL){ return NULL;}
