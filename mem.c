@@ -251,8 +251,9 @@ void *mem_alloc(size_t taille) {
 	size_t taille_pour_fct = taille + sizeof(size_t);	 // allignement
 	taille_pour_fct = aligne_taille(taille_pour_fct, ALIGNMENT);
 	struct zones_libres* case_a_remplir = get_header()->fit(get_header()->liste_zone_libre, taille_pour_fct);
-	struct zones_libres* suiv_case_a_remplir = case_a_remplir->next;
 	if(case_a_remplir == NULL){ return NULL;}
+	struct zones_libres* suiv_case_a_remplir = case_a_remplir->next;
+	
 
 	struct zones_libres* pred_case_a_remplir = zone_precedente(case_a_remplir);
 	if (pred_case_a_remplir == NULL){ printf("oups\n");}
