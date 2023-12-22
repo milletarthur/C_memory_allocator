@@ -262,9 +262,11 @@ void *mem_alloc(size_t taille) {
 		char* debut_zl_a_initialiser = (char*)case_a_remplir + taille_pour_fct;
 		pred_case_a_remplir->next = (struct zones_libres*)debut_zl_a_initialiser;
 		pred_case_a_remplir->next->size = case_a_remplir->size - taille_pour_fct;
-		pred_case_a_remplir->next->next = case_a_remplir->next; //a voir si c'est ca 
 		if (pred_case_a_remplir == case_a_remplir){
 			get_header()->liste_zone_libre = (struct zones_libres*)debut_zl_a_initialiser;
+			pred_case_a_remplir->next = case_a_remplir->next;
+		} else {
+			pred_case_a_remplir->next->next = case_a_remplir->next; //a voir si c'est ca 
 		}
 	} else {
 		taille_pour_fct += case_a_remplir->size - taille_pour_fct;
@@ -401,6 +403,11 @@ struct zones_libres* retrouve_prec (void* mem){
 
 
 void mem_free(void *mem) {
+	if(get_header()->liste_zone_libre == NULL){
+		get_header()->liste_zone_libre = (struct zones_libres*)((char*)mem - sizeof(size_t));
+		get_header()->liste_zone_libre->size = ((struct zone_occupee*)((char*)mem - sizeof(size_t)))->size;
+		get_header()->liste_zone_libre->next = NULL;
+	}
 	struct zones_libres* zone_av = retrouve_prec(mem - sizeof(size_t));
 	if((void*)zone_av > mem){
 		get_header()->liste_zone_libre = (struct zones_libres*)((char*)mem - sizeof(size_t)) ;
