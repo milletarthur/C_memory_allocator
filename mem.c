@@ -156,7 +156,6 @@ void *mem_alloc(size_t taille) {
 	if(case_a_remplir == NULL){ return NULL;}
 	struct zones_libres* suiv_case_a_remplir = case_a_remplir->next;
 	
-
 	struct zones_libres* pred_case_a_remplir = zone_precedente(case_a_remplir);
 	if(taille_pour_fct + sizeof(struct zones_libres) <= case_a_remplir->size){
 		char* debut_zl_a_initialiser = (char*)case_a_remplir + taille_pour_fct;
@@ -206,6 +205,7 @@ struct zones_libres* retrouve_prec (void* mem){
 		if(addr_fin_zone == mem){ return rv;}
 		addr_fin_zone = (char*)rv - rv->size;
 		rv = rv->next;
+		
 	}
 	return zone_precedente(rv);
 }
